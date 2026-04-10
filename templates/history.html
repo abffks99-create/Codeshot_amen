@@ -203,7 +203,7 @@
         {% for p in range(1, total_pages+1) %}
         <a href="/history?page={{ p }}"
            style="padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;
-                  {% if p == page %}background:#2E90FA;color:#fff;{% else %}background:#F3F4F8;color:#667085;{% endif %}">
+                  {% if p == page %}background:#2E90FA; color:#fff; {% else %}background:#F3F4F8; color:#667085;{% endif %}">
           {{ p }}
         </a>
         {% endfor %}
