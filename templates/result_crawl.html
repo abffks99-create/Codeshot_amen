@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2E90FA">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CodeShot — URL 분석 결과</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .url-preview-box {
+      background: #F9FAFB;
+      border: 1px solid #EAECF0;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .url-text {
+      font-size: 14px;
+      color: #344054;
+      word-break: break-all;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+    .url-open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #667085;
+      background: #fff;
+      border: 1.5px solid #EAECF0;
+      border-radius: 8px;
+      padding: 8px 14px;
+      text-decoration: none;
+      width: fit-content;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .url-open-btn:hover { border-color: #98A2B3; color: #344054; }
+    .url-warning-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #B42318;
+      background: #FEF3F2;
+      border: 1px solid #FECDCA;
+      border-radius: 8px;
+      padding: 8px 14px;
+      width: fit-content;
+    }
+    /* 외부링크 경고 모달 */
+    .link-modal-bg {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .link-modal-bg.show { display: flex; }
+    .link-modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .link-modal-icon { font-size: 36px; margin-bottom: 12px; }
+    .link-modal-title { font-size: 17px; font-weight: 800; color: #101828; margin-bottom: 8px; }
+    .link-modal-url {
+      font-size: 12px; color: #667085; word-break: break-all;
+      background: #F9FAFB; padding: 10px 12px; border-radius: 8px;
+      margin-bottom: 16px; line-height: 1.5;
+    }
+    .link-modal-warn { font-size: 13px; color: #B42318; font-weight: 500; margin-bottom: 20px; line-height: 1.6; }
+    .link-modal-btns { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="logo" href="/main">
+    <svg class="logo-svg" viewBox="0 0 48 48" fill="none"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="logo-text">CodeShot</span>
+  </a>
+  <div class="nav-links">
+    <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
+    <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
+    <a href="/logout" class="btn-logout">로그아웃</a>
+  </div>
+</nav>
+
+<!-- 외부 링크 경고 모달 -->
+{% set level = result.ciritical_level|string %}
+<div class="link-modal-bg" id="link-modal">
+  <div class="link-modal">
+    <div class="link-modal-icon">
+      {% if '고위험' in level %}⛔{% elif '중위험' in level %}⚠️{% else %}🔗{% endif %}
+    </div>
+    <div class="link-modal-title">외부 링크로 이동</div>
+    <div class="link-modal-url">{{ result.cr_url }}</div>
+    {% if '고위험' in level %}
+    <div class="link-modal-warn">⚠ 이 URL은 고위험으로 판정되었습니다. 접속 시 개인정보 탈취, 악성코드 감염 등의 위험이 있습니다. 정말 접속하시겠습니까?</div>
+    {% elif '중위험' in level %}
+    <div class="link-modal-warn">이 URL은 중위험으로 판정되었습니다. 신중하게 판단 후 접속하세요.</div>
+    {% else %}
+    <div class="link-modal-warn" style="color:#667085;">외부 사이트로 이동합니다. 항상 주의하세요.</div>
+    {% endif %}
+    <div class="link-modal-btns">
+      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="closeModal()">취소</button>
+      <a href="{{ result.cr_url }}" target="_blank" rel="noopener noreferrer"
+         class="btn {% if '고위험' in level %}btn-danger{% else %}btn-primary{% endif %} btn-sm"
+         style="flex:1;display:flex;align-items:center;justify-content:center;"
+         onclick="closeModal()">
+        {% if '고위험' in level %}그래도 접속{% else %}접속하기{% endif %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 위험도 배너 -->
+  {% if '고위험' in level %}
+  <div class="result-danger">
+    <div class="result-icon icon-danger">!</div>
+    <div><div style="font-size:16px;font-weight:700;">고위험 — 피싱 의심</div>
+    <div style="font-size:13px;opacity:0.8;margin-top:2px;">즉시 접속을 중단하세요</div></div>
+  </div>
+  {% elif '중위험' in level %}
+  <div class="result-danger" style="background:#FFFBEB;border-color:#FDE68A;color:#B45309;">
+    <div class="result-icon" style="background:#F59E0B;color:#fff;">!</div>
+    <div><div style="font-size:16px;font-weight:700;">중위험 — 주의 필요</div></div>
+  </div>
+  {% elif '저위험' in level %}
+  <div class="result-safe" style="background:#EFF8FF;border-color:#B2DDFF;color:#175CD3;">
+    <div class="result-icon" style="background:#2E90FA;color:#fff;">✓</div>
+    <div><div style="font-size:16px;font-weight:700;">저위험 — 비교적 안전</div></div>
+  </div>
+  {% else %}
+  <div class="result-safe">
+    <div class="result-icon icon-safe">✓</div>
+    <div><div style="font-size:16px;font-weight:700;">분석 완료 — {{ level }}</div></div>
+  </div>
+  {% endif %}
+
+  <!-- 분석한 URL 미리보기 -->
+  <div class="card">
+    <div class="section-title">분석한 URL</div>
+    <div class="url-preview-box">
+      <div class="url-text">{{ result.cr_url }}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <!-- 복사 버튼 -->
+        <button class="url-open-btn" onclick="copyURL()">
+          📋 URL 복사
+        </button>
+        <!-- 접속 버튼 (경고 모달 먼저) -->
+        {% if '고위험' in level %}
+        <button class="url-warning-btn" onclick="openModal()">
+          ⛔ 위험 — 그래도 접속
+        </button>
+        {% else %}
+        <button class="url-open-btn" onclick="openModal()">
+          🔗 해당 사이트 방문
+        </button>
+        {% endif %}
+      </div>
+      <div id="copy-msg" style="font-size:12px;color:#12B76A;display:none;">✓ 복사되었습니다!</div>
+    </div>
+  </div>
+
+  <!-- AI 분석 결과 -->
+  <div class="card">
+    <div class="section-title">종합 분석 (AI)</div>
+    <p style="font-size:14px;color:#344054;line-height:1.8;background:#F9FAFB;padding:16px;border-radius:10px;white-space:pre-wrap;">{{ result.total_analysis }}</p>
+  </div>
+
+  <!-- 면책 문구 -->
+  <div class="info-box yellow">
+    <div class="info-title">⚠ AI 분석 안내</div>
+    <p>본 결과는 AI가 크롤링 데이터를 기반으로 판단한 참고용 정보입니다. 실제 피싱 여부는 100% 보장되지 않으며 최종 판단은 사용자가 직접 해야 합니다.<br>의심스러운 경우 한국인터넷진흥원(KISA) 피싱 신고센터 <strong>118</strong>에 문의하세요.</p>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:24px;margin-bottom:20px;">
+    <a href="/crawl" class="btn btn-primary" style="flex:1;">새 URL 분석</a>
+    <a href="/main" class="btn btn-secondary" style="flex:1;">목록으로</a>
+  </div>
+</div>
+
+<nav class="mobile-bottom-nav">
+  <a href="/main"><span>🏠</span>홈</a>
+  <a href="/upload"><span>🖼</span>이미지</a>
+  <a href="/crawl"><span>🔗</span>URL</a>
+  <a href="/alerts"><span>🔔</span>알림</a>
+  <a href="/mypage"><span>👤</span>내정보</a>
+</nav>
+
+<script>
+function openModal() {
+  document.getElementById('link-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('link-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+function copyURL() {
+  navigator.clipboard.writeText('{{ result.cr_url }}').then(() => {
+    const msg = document.getElementById('copy-msg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 2000);
+  });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>

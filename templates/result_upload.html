@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2E90FA">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CodeShot — 이미지 분석 결과</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .img-preview-wrap {
+      text-align: center;
+      background: #F9FAFB;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 4px;
+    }
+    .img-preview-wrap img {
+      max-width: 100%;
+      max-height: 360px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      object-fit: contain;
+    }
+    .img-expand-btn {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #2E90FA;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    /* 전체화면 이미지 뷰어 */
+    .img-fullscreen {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .img-fullscreen.show { display: flex; }
+    .img-fullscreen img {
+      max-width: 95vw; max-height: 85vh;
+      border-radius: 10px; object-fit: contain;
+    }
+    .img-fullscreen-close {
+      color: #fff; font-size: 14px; font-weight: 600;
+      cursor: pointer; padding: 10px 24px;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="logo" href="/main">
+    <svg class="logo-svg" viewBox="0 0 48 48" fill="none"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="logo-text">CodeShot</span>
+  </a>
+  <div class="nav-links">
+    <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
+    <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
+    <a href="/logout" class="btn-logout">로그아웃</a>
+  </div>
+</nav>
+
+<!-- 전체화면 이미지 뷰어 -->
+<div class="img-fullscreen" id="fullscreen" onclick="closeFullscreen()">
+  <img src="/static/uploads/{{ result.file_name }}" alt="{{ result.file_name }}">
+  <div class="img-fullscreen-close">✕ 닫기</div>
+</div>
+
+<div class="container">
+  <!-- 위험도 배너 -->
+  {% set result_text = result.deep_result|string %}
+  {% if '고위험' in result_text %}
+  <div class="result-danger">
+    <div class="result-icon icon-danger">!</div>
+    <div><div style="font-size:16px;font-weight:700;">고위험 — 피싱 의심</div>
+    <div style="font-size:13px;opacity:0.8;margin-top:2px;">즉시 접속을 중단하세요</div></div>
+  </div>
+  {% elif '중위험' in result_text %}
+  <div class="result-danger" style="background:#FFFBEB;border-color:#FDE68A;color:#B45309;">
+    <div class="result-icon" style="background:#F59E0B;color:#fff;">!</div>
+    <div><div style="font-size:16px;font-weight:700;">중위험 — 주의 필요</div>
+    <div style="font-size:13px;opacity:0.8;margin-top:2px;">신중하게 확인하세요</div></div>
+  </div>
+  {% elif '저위험' in result_text %}
+  <div class="result-safe" style="background:#EFF8FF;border-color:#B2DDFF;color:#175CD3;">
+    <div class="result-icon" style="background:#2E90FA;color:#fff;">✓</div>
+    <div><div style="font-size:16px;font-weight:700;">저위험 — 비교적 안전</div>
+    <div style="font-size:13px;opacity:0.8;margin-top:2px;">그래도 주의하세요</div></div>
+  </div>
+  {% elif '안전' in result_text or '정상' in result_text %}
+  <div class="result-safe">
+    <div class="result-icon icon-safe">✓</div>
+    <div><div style="font-size:16px;font-weight:700;">안전 — 이상 없음</div>
+    <div style="font-size:13px;opacity:0.8;margin-top:2px;">정상으로 판단됩니다</div></div>
+  </div>
+  {% else %}
+  <div class="result-safe">
+    <div class="result-icon icon-safe">✓</div>
+    <div><div style="font-size:16px;font-weight:700;">이미지 분석 완료</div></div>
+  </div>
+  {% endif %}
+
+  <!-- 원본 이미지 미리보기 -->
+  <div class="card">
+    <div class="section-title">분석한 이미지</div>
+    <div class="img-preview-wrap">
+      <img src="/static/uploads/{{ result.file_name }}"
+           alt="{{ result.file_name }}"
+           onclick="openFullscreen()"
+           style="cursor:zoom-in;">
+      <br>
+      <span class="img-expand-btn" onclick="openFullscreen()">🔍 크게 보기</span>
+    </div>
+  </div>
+
+  <!-- 파일 정보 -->
+  <div class="card">
+    <div class="section-title">파일 정보</div>
+    <table class="info-table">
+      <tr><td>파일명</td><td><strong>{{ result.file_name }}</strong></td></tr>
+      <tr><td>파일크기</td><td>{{ result.file_size }}</td></tr>
+      <tr><td>확장자</td><td>{{ result.file_ext | upper }}</td></tr>
+      <tr><td>분석 모델</td><td>{{ result.deep_model }}</td></tr>
+      <tr><td>분석일시</td><td>{{ result.uploaded_at }}</td></tr>
+    </table>
+  </div>
+
+  <!-- AI 분석 결과 -->
+  <div class="card">
+    <div class="section-title">AI 분석 결과</div>
+    <p style="font-size:14px;color:#344054;line-height:1.8;background:#F9FAFB;padding:16px;border-radius:10px;white-space:pre-wrap;">{{ result.deep_result }}</p>
+  </div>
+
+  <!-- 면책 문구 -->
+  <div class="info-box yellow">
+    <div class="info-title">⚠ AI 분석 안내</div>
+    <p>본 결과는 AI가 이미지를 기반으로 판단한 참고용 정보입니다. 실제 피싱 여부는 100% 보장되지 않으며 최종 판단은 사용자가 직접 해야 합니다.<br>의심스러운 경우 한국인터넷진흥원(KISA) 피싱 신고센터 <strong>118</strong>에 문의하세요.</p>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:24px;margin-bottom:20px;">
+    <a href="/upload" class="btn btn-primary" style="flex:1;">새 이미지 분석</a>
+    <a href="/main" class="btn btn-secondary" style="flex:1;">목록으로</a>
+  </div>
+</div>
+
+<nav class="mobile-bottom-nav">
+  <a href="/main"><span>🏠</span>홈</a>
+  <a href="/upload"><span>🖼</span>이미지</a>
+  <a href="/crawl"><span>🔗</span>URL</a>
+  <a href="/alerts"><span>🔔</span>알림</a>
+  <a href="/mypage"><span>👤</span>내정보</a>
+</nav>
+
+<script>
+function openFullscreen() {
+  document.getElementById('fullscreen').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeFullscreen() {
+  document.getElementById('fullscreen').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFullscreen(); });
+</script>
+</body>
+</html>

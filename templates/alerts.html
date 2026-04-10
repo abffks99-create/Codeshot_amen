@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2E90FA">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CodeShot — 알림</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="logo" href="/main">
+    <svg class="logo-svg" viewBox="0 0 48 48" fill="none"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="logo-text">CodeShot</span>
+  </a>
+  <div class="nav-links">
+    <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
+    <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
+    <a href="/logout" class="btn-logout">로그아웃</a>
+  </div>
+</nav>
+<div class="container">
+  <div class="card">
+    <div class="section-header">
+      <div class="page-title" style="margin-bottom:0;">알림</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        {% set unread = alerts|selectattr('received_yn','eq','N')|list|length %}
+        {% if unread > 0 %}<span class="badge badge-blue">미확인 {{ unread }}</span>{% endif %}
+        {% if alerts %}
+        <form method="POST" action="/alerts/read_all">
+          <button type="submit" class="btn btn-outline btn-sm">전체 확인</button>
+        </form>
+        <form method="POST" action="/alerts/delete_all" onsubmit="return confirm('모두 삭제할까요?')">
+          <button type="submit" class="btn btn-danger btn-sm">전체 삭제</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if alerts %}
+      {% for a in alerts %}
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #F3F4F8;">
+        <div class="alert-dot {% if a.received_yn == 'Y' %}read{% endif %}" style="margin-top:5px;flex-shrink:0;"></div>
+        <div class="alert-body" style="flex:1;cursor:pointer;"
+             onclick="location.href='/alerts/read/{{ a.alert_idx }}'">
+          <div class="alert-title">
+            {% if a.alert_type == '크롤링' %}<span class="badge badge-blue" style="margin-right:6px;font-size:11px;">URL</span>
+            {% else %}<span class="badge badge-gray" style="margin-right:6px;font-size:11px;">이미지</span>{% endif %}
+            {{ a.alert_msg }}
+          </div>
+          <div class="alert-time">{{ a.sended_at }} ·
+            {% if a.received_yn == 'N' %}<span style="color:#2E90FA;font-weight:600;">미확인</span>
+            {% else %}확인됨{% endif %}
+          </div>
+        </div>
+        <!-- 개별 삭제 -->
+        <form method="POST" action="/alerts/delete/{{ a.alert_idx }}"
+              onsubmit="return confirm('이 알림을 삭제할까요?')" style="flex-shrink:0;">
+          <button type="submit" style="background:none;border:none;cursor:pointer;color:#FDA29B;font-size:16px;padding:4px 8px;" title="삭제">🗑</button>
+        </form>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">🔔</span>
+        <div class="empty-title">알림이 없어요</div>
+        <div class="empty-sub">분석을 시작하면 결과 알림이 여기에 표시돼요</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+  <nav class="mobile-bottom-nav">
+    <a href="/main">
+      <span>🏠</span>홈
+    </a>
+    <a href="/upload">
+      <span>🖼</span>이미지
+    </a>
+    <a href="/crawl">
+      <span>🔗</span>URL
+    </a>
+    <a href="/alerts">
+      <span>🔔</span>알림
+    </a>
+    <a href="/mypage">
+      <span>👤</span>내정보
+    </a>
+  </nav>
+</body>
+</html>

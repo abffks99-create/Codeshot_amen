@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2E90FA">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CodeShot — URL 분석</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .apple-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(255,255,255,0.96);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+    .apple-overlay.show { display: flex; }
+    .apple-ring-wrap { position: relative; width: 120px; height: 120px; }
+    .apple-icon {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
+      50% { transform: translate(-50%,-50%) scale(1.12); opacity:0.8; }
+    }
+    .apple-ring-svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+    .apple-ring-bg { fill: none; stroke: #E5E7EB; stroke-width: 6; }
+    .apple-ring-fg { fill: none; stroke: #F04438; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 314; transition: stroke-dashoffset 1s linear; }
+    .apple-title { font-size: 20px; font-weight: 700; color: #101828; letter-spacing: -0.03em; }
+    .apple-sub { font-size: 14px; color: #667085; margin-top: -16px; }
+    .apple-bar-wrap { width: 240px; height: 6px; background: #F2F4F7; border-radius: 99px; overflow: hidden; }
+    .apple-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #F04438, #F97316); border-radius: 99px; transition: width 1s linear; }
+    .apple-timer { font-size: 13px; font-weight: 600; color: #F04438; margin-top: -12px; }
+    .apple-step { font-size: 13px; color: #98A2B3; min-height: 20px; }
+    .tip-card {
+      background: #fff; border: 1px solid #EAECF0; border-radius: 14px;
+      padding: 16px 20px; width: 280px; text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      animation: tipFadeIn 0.5s ease both;
+    }
+    @keyframes tipFadeIn {
+      from { opacity:0; transform: translateY(6px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .tip-emoji { font-size: 26px; margin-bottom: 6px; }
+    .tip-title { font-size: 13px; font-weight: 700; color: #101828; margin-bottom: 4px; }
+    .tip-desc  { font-size: 12px; color: #667085; line-height: 1.6; }
+    .tip-dots  { display:flex; gap:5px; justify-content:center; margin-top:8px; }
+    .tip-dot   { width:6px; height:6px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
+    .tip-dot.on { background:#F04438; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="logo" href="/main">
+    <svg class="logo-svg" viewBox="0 0 48 48" fill="none"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="logo-text">CodeShot</span>
+  </a>
+  <div class="nav-links">
+    <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
+    <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
+    <a href="/logout" class="btn-logout">로그아웃</a>
+  </div>
+</nav>
+
+<!-- Apple 스타일 로딩 -->
+<div class="apple-overlay" id="apple-overlay">
+  <div class="apple-ring-wrap">
+    <svg class="apple-ring-svg" viewBox="0 0 120 120">
+      <circle class="apple-ring-bg" cx="60" cy="60" r="50"/>
+      <circle class="apple-ring-fg" id="ring-fg" cx="60" cy="60" r="50"/>
+    </svg>
+    <div class="apple-icon">🔗</div>
+  </div>
+  <div class="apple-title">URL 분석 중</div>
+  <div class="apple-step" id="step-text">웹사이트에 접속하는 중...</div>
+  <div class="apple-bar-wrap">
+    <div class="apple-bar-fill" id="bar-fill"></div>
+  </div>
+  <div class="apple-timer" id="timer-text">약 30초 남음</div>
+
+  <!-- 피싱 예방 팁 -->
+  <div class="tip-card" id="tip-card">
+    <div class="tip-emoji" id="tip-emoji">🛡</div>
+    <div class="tip-title" id="tip-title">잠깐! 피싱 예방 TIP</div>
+    <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
+    <div class="tip-dots" id="tip-dots"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="page-title">URL 분석</div>
+    {% if error %}<div class="msg-error">⚠ {{ error }}</div>{% endif %}
+    <form method="POST" action="/crawl" id="crawl-form">
+      <div class="form-group">
+        <label>분석할 URL</label>
+        <input type="text" name="url" id="url-input" placeholder="https://example.com" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submit-btn">🔍 분석 시작</button>
+    </form>
+  </div>
+  <div class="info-box red">
+    <div class="info-title">🚨 이런 URL을 분석해보세요</div>
+    <p>카카오·네이버·은행 등을 사칭한 링크<br>문자·카톡으로 받은 의심스러운 링크<br>분석에 약 20~40초 소요됩니다.</p>
+  </div>
+</div>
+
+<script>
+const TOTAL = 35;
+const steps = [
+  { at: 0,  text: '웹사이트에 접속하는 중...' },
+  { at: 15, text: '페이지 내용을 수집하는 중...' },
+  { at: 40, text: 'AI가 피싱 패턴을 분석하는 중...' },
+  { at: 70, text: 'URL 이상 여부를 확인하는 중...' },
+  { at: 90, text: '분석 결과를 정리하는 중...' },
+  { at: 96, text: '거의 다 됐어요!' },
+];
+
+const TIPS = [
+  { emoji:'🔍', title:'URL을 꼼꼼히 확인하세요', desc:'정식 사이트와 철자 하나만 다른 도메인(예: naver vs nave r)을 사용하는 게 피싱의 전형적인 수법이에요.' },
+  { emoji:'🔒', title:'자물쇠(HTTPS)만 믿지 마세요', desc:'HTTPS라도 피싱 사이트일 수 있어요. 도메인 주소 자체가 올바른지 반드시 확인하세요.' },
+  { emoji:'📲', title:'문자·카톡 링크는 특히 주의', desc:'금융기관과 공공기관은 문자로 로그인 링크를 절대 보내지 않아요. 의심스러우면 공식 앱으로 직접 접속하세요.' },
+  { emoji:'🎁', title:'"당첨됐어요!" 는 99% 피싱', desc:'이벤트 당첨, 택배 미수령 등의 문자는 피싱의 대표 사례예요. 링크 클릭 전 반드시 확인하세요.' },
+  { emoji:'🧠', title:'개인정보 입력 전 한 번 더 확인', desc:'아이디·비밀번호·주민번호를 요구하는 사이트는 반드시 공식 사이트인지 확인 후 입력하세요.' },
+  { emoji:'📞', title:'모르는 번호 전화도 피싱일 수 있어요', desc:'보이스피싱은 금감원·경찰·검찰을 사칭해요. 의심되면 전화를 끊고 공식 번호로 직접 전화하세요.' },
+  { emoji:'🏦', title:'금융 정보는 공식 앱에서만', desc:'은행·카드사 링크는 공식 앱 스토어에서 다운로드한 앱으로만 접근하세요. 검색 광고 링크도 위험할 수 있어요.' },
+];
+
+let tipIdx = 0;
+let tipInterval = null;
+
+function renderTip(idx) {
+  const t = TIPS[idx];
+  const card = document.getElementById('tip-card');
+  card.style.animation = 'none';
+  card.offsetHeight; // reflow
+  card.style.animation = 'tipFadeIn 0.5s ease both';
+  document.getElementById('tip-emoji').textContent = t.emoji;
+  document.getElementById('tip-title').textContent = t.title;
+  document.getElementById('tip-desc').textContent  = t.desc;
+
+  // dots
+  const dots = document.getElementById('tip-dots');
+  dots.innerHTML = '';
+  TIPS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'tip-dot' + (i === idx ? ' on' : '');
+    dots.appendChild(d);
+  });
+}
+
+document.getElementById('crawl-form').addEventListener('submit', function(e) {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) return;
+
+  document.getElementById('apple-overlay').classList.add('show');
+  document.getElementById('submit-btn').disabled = true;
+
+  // 팁 시작
+  tipIdx = 0;
+  renderTip(tipIdx);
+  tipInterval = setInterval(() => {
+    tipIdx = (tipIdx + 1) % TIPS.length;
+    renderTip(tipIdx);
+  }, 5000);
+
+  let elapsed = 0;
+  const ring  = document.getElementById('ring-fg');
+  const bar   = document.getElementById('bar-fill');
+  const timer = document.getElementById('timer-text');
+  const stepEl = document.getElementById('step-text');
+  const circumference = 314;
+
+  const interval = setInterval(() => {
+    elapsed++;
+    const pct = Math.min((elapsed / TOTAL) * 100, 98);
+    ring.style.strokeDashoffset = circumference - (circumference * pct / 100);
+    bar.style.width = pct + '%';
+
+    const remaining = Math.max(TOTAL - elapsed, 1);
+    timer.textContent = `약 ${remaining}초 남음`;
+
+    for (let i = steps.length - 1; i >= 0; i--) {
+      if (pct >= steps[i].at) { stepEl.textContent = steps[i].text; break; }
+    }
+    if (elapsed >= TOTAL * 3) clearInterval(interval);
+  }, 1000);
+});
+</script>
+  <nav class="mobile-bottom-nav">
+    <a href="/main">
+      <span>🏠</span>홈
+    </a>
+    <a href="/upload">
+      <span>🖼</span>이미지
+    </a>
+    <a href="/crawl">
+      <span>🔗</span>URL
+    </a>
+    <a href="/alerts">
+      <span>🔔</span>알림
+    </a>
+    <a href="/mypage">
+      <span>👤</span>내정보
+    </a>
+  </nav>
+</body>
+</html>
