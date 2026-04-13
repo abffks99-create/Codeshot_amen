@@ -59,7 +59,7 @@ def friendly_ai_error(e):
 def migrate_db():
     try:
         db = get_db(); cur = db.cursor()
-        for col in ['cr_url','cr_col1','cr_col2','cr_col3','cr_col4','cr_col5','cr_col6']:
+        for col in ['cr_url','site_title','raw_text','meta_desc','img_path','ssl_yn','sever_loc', 'created_at']:
             cur.execute(f"ALTER TABLE tb_crawling MODIFY {col} TEXT")
         db.commit(); cur.close(); db.close()
     except Exception as e:
@@ -344,7 +344,7 @@ def crawl():
             cols = ['크롤링 실패'] * 6
 
         db = get_db(); cur = db.cursor()
-        cur.execute("INSERT INTO tb_crawling (id,cr_url,cr_col1,cr_col2,cr_col3,cr_col4,cr_col5,cr_col6) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        cur.execute("INSERT INTO tb_crawling (id,cr_url,'site_title','raw_text','meta_desc','img_path','ssl_yn','sever_loc', 'created_at') VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                     (session['user_id'], url, *cols))
         db.commit(); cr_idx = cur.lastrowid
 
