@@ -171,43 +171,43 @@
     </div>
   </div>
 
-  <!-- AI 분석 결과 -->
+  <!-- AI 분석 결과 카드 -->
   <div class="card">
     <div class="section-title">항목별 분석 결과</div>
     {% set raw = result.total_analysis %}
-    {% if raw and raw.startswith('{') %}
+    {% set is_json = raw and '{' in raw %}
+    {% if is_json %}
       {% set parsed = raw | from_json %}
-      {% for item in parsed.items %}
-      <div style="display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:12px;margin-bottom:10px;
-        {% if item.status == 'danger' %}background:#FEF3F2;border:1px solid #FECDCA;
-        {% elif item.status == 'warning' %}background:#FFFBEB;border:1px solid #FDE68A;
-        {% else %}background:#ECFDF3;border:1px solid #A9EFC5;{% endif %}">
-        <div style="font-size:22px;flex-shrink:0;margin-top:2px;">
+      {% for item in parsed.get('items', []) %}
+      <div style="display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:14px;margin-bottom:12px;
+        {% if item.status == 'danger' %}background:#FEF3F2;border:1.5px solid #FECDCA;
+        {% elif item.status == 'warning' %}background:#FFFBEB;border:1.5px solid #FDE68A;
+        {% else %}background:#ECFDF3;border:1.5px solid #A9EFC5;{% endif %}">
+        <div style="font-size:28px;flex-shrink:0;margin-top:2px;">
           {% if item.status == 'danger' %}❌
           {% elif item.status == 'warning' %}⚠️
           {% else %}✅{% endif %}
         </div>
         <div>
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;
+          <div style="font-weight:800;font-size:17px;margin-bottom:6px;
             {% if item.status == 'danger' %}color:#B42318;
             {% elif item.status == 'warning' %}color:#B45309;
             {% else %}color:#027A48;{% endif %}">
             {{ item.title }}
           </div>
-          <div style="font-size:13px;color:#344054;line-height:1.6;">{{ item.desc }}</div>
+          <div style="font-size:15px;color:#344054;line-height:1.8;">{{ item.desc }}</div>
         </div>
       </div>
       {% endfor %}
-
       <!-- 종합 의견 -->
-      <div style="background:#F9FAFB;border:1px solid #EAECF0;border-radius:12px;padding:16px;margin-top:4px;">
-        <div style="font-size:11px;font-weight:700;color:#98A2B3;letter-spacing:0.06em;margin-bottom:8px;">💡 종합 의견</div>
-        <div style="font-size:13px;color:#344054;line-height:1.8;">{{ parsed.summary }}</div>
+      {% if parsed.get('summary') %}
+      <div style="background:#F9FAFB;border:1px solid #EAECF0;border-radius:14px;padding:20px;margin-top:6px;">
+        <div style="font-size:13px;font-weight:700;color:#98A2B3;letter-spacing:0.06em;margin-bottom:10px;">💡 종합 의견</div>
+        <div style="font-size:15px;color:#344054;line-height:1.9;">{{ parsed.summary }}</div>
       </div>
-
+      {% endif %}
     {% else %}
-      <!-- JSON 파싱 실패 시 기존 텍스트 표시 -->
-      <p style="font-size:14px;color:#344054;line-height:1.8;background:#F9FAFB;padding:16px;border-radius:10px;white-space:pre-wrap;">{{ raw }}</p>
+      <p style="font-size:15px;color:#344054;line-height:1.8;background:#F9FAFB;padding:16px;border-radius:10px;white-space:pre-wrap;">{{ raw }}</p>
     {% endif %}
   </div>
 
