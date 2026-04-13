@@ -15,7 +15,7 @@ from openphish_updater import start_background_updater
 load_dotenv()
 
 # ─── Gemini API 설정 ────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+GEMINI_API_KEY = os.environ.get('AIzaSyC0aFKNsXJcxb5K86f0hly6f7p9I2a1vyc')
 if not GEMINI_API_KEY:
     raise ValueError("❌ GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.")
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -265,76 +265,64 @@ def upload():
             image_prompt = f"""당신은 대한민국 최고의 피싱 이미지 분석 전문가입니다.
 금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.
 
-[RAG 참조 데이터]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {rag_context}
 
-[분석 지침]
-첨부된 이미지를 다음 5가지 항목으로 정밀 분석하라:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 분석 요청 사항 (반드시 아래 순서와 형식으로 답변)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. 도메인/브랜드 위장 (Brand Spoofing)
-   - 공식 로고·브랜드를 모방했는가?
-   - 철자 오류나 유사 도메인이 보이는가?
+첨부된 이미지를 피싱 탐지 관점에서 분석하고,
+위의 RAG 참조 데이터(블랙리스트·사례집·패턴)를 반드시 참고하여
+참고한 사례가 있으면 명시하세요.
 
-2. 사칭 대상 식별 (Identity Theft)
-   - 어떤 기관/브랜드를 사칭하는가?
-   - 여러 기관을 동시에 언급하여 신뢰를 유도하는가?
+1. 🚨 피싱 의심 요소
+   - 이미지에서 발견된 위장 브랜드, 로고, 문구, URL, 긴급 문구 등
 
-3. 위험 패턴 매칭 (Pattern Matching)
-   - KISA/금감원이 경고한 스미싱·피싱 패턴과 일치하는가?
-   - RAG 데이터의 사례와 유사한가?
+2. 🏦 사칭 대상 식별
+   - 어떤 기관/브랜드를 사칭하는지 (은행, 카카오, 네이버 등)
 
-4. 기술적 위협 요소 (Technical Threat)
-   - 악성 URL, QR코드, 앱 설치 유도 문구가 있는가?
-   - 개인정보 입력을 요구하는 화면인가?
+3. 📊 RAG 기반 유사 사례 매칭
+   - 위의 참조 데이터 중 일치하거나 유사한 피싱 수법 명시
+   - 없으면 "유사 사례 없음 — 신종 수법 가능성"
 
-5. 심리 조작 요소 (Psychological Tactic)
-   - '긴급', '당첨', '마감' 등 조급함을 유발하는 문구가 있는가?
-   - 클릭을 강요하는 버튼이나 문구가 있는가?
+4. ⚠️ 위험도 판별
+   - 고위험 / 중위험 / 저위험 / 안전 중 하나만 명시
+   - 판단 근거를 구체적으로 설명
 
-[출력 형식 - 반드시 아래 JSON만 출력, 다른 텍스트 절대 금지]
-{{
-  "level": "고위험 또는 중위험 또는 저위험 또는 안전",
-  "items": [
-    {{
-      "title": "브랜드 위장",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "발견된 구체적 증거와 수법 설명 (2~3문장)"
-    }},
-    {{
-      "title": "사칭 대상",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "발견된 구체적 증거와 수법 설명 (2~3문장)"
-    }},
-    {{
-      "title": "위험 패턴",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "RAG 데이터 매칭 결과 및 근거 (2~3문장)"
-    }},
-    {{
-      "title": "기술적 위협",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "악성 URL, 앱 설치 유도, 개인정보 탈취 시도 여부 (2~3문장)"
-    }},
-    {{
-      "title": "심리 조작",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "심리적 조작 요소 발견 여부 (2~3문장)"
-    }}
-  ],
-  "summary": "종합 의견 및 사용자 행동 지침 (3~4문장, AI 한계 명시 포함)"
-}}"""
+5. 💡 종합 분석 및 사용자 행동 권고
+   - 이 이미지를 받은 사람이 취해야 할 행동
+   - AI 분석의 한계 명시 (100% 보장 불가)
+
+답변은 반드시 한국어로 작성하세요.
+"""
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[image_prompt, uploaded_file]
             )
             raw = response.text.strip()
-            if raw.startswith('```'):
-                raw = raw.split('\n', 1)[1].rsplit('```', 1)[0]
+
+            # ── JSON 파싱 (강화된 버전) ───────────────────────
+            def safe_parse_json(text):
+                if '```' in text:
+                    text = text.split('```')[1]
+                    if text.startswith('json'):
+                        text = text[4:]
+                text = text.strip()
+                start = text.find('{')
+                end   = text.rfind('}')
+                if start != -1 and end != -1:
+                    text = text[start:end+1]
+                return json.loads(text)
+
             try:
-                parsed = json.loads(raw)
+                parsed = safe_parse_json(raw)
                 result = json.dumps(parsed, ensure_ascii=False)
             except Exception:
                 result = raw
+
             deep_model = 'gemini-2.5-flash (RAG 강화)'
         except Exception as e:
             result = friendly_ai_error(e); deep_model = 'Gemini (Error)'
@@ -403,85 +391,76 @@ def crawl():
 금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.
 
 {blacklist_warning}
-[RAG 참조 데이터]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {rag_context}
 
-[분석 대상]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 분석 대상 URL 정보
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 URL: {url}
 페이지 제목: {cols[0]}
-본문: {cols[1]}
-링크: {cols[2]}
-메타: {cols[4]}
-최종 URL: {cols[5]}
+본문 내용: {cols[1]}
+링크 목록: {cols[2]}
+이미지 목록: {cols[3]}
+메타 정보: {cols[4]}
+최종 이동 URL: {cols[5]}
 
-[분석 지침]
-다음 5가지 항목을 순서대로 정밀 분석하라:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 분석 요청 사항 (반드시 아래 순서와 형식으로 답변)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. 도메인 정밀 검사 (Domain Integrity)
-   - 공식 주소와 유사한 철자(Typosquatting)를 사용했는가?
-   - 숫자 '0'과 알파벳 'o'를 섞는 등의 기만 기법이 있는가?
+위의 RAG 참조 데이터(블랙리스트·사례집·패턴)를 반드시 참고하여 분석하고,
+참고한 사례가 있으면 "○○ 사례와 유사합니다" 형태로 명시하세요.
 
-2. 사칭 대상 식별 (Identity Theft)
-   - 특정 금융기관(KB, 카카오페이 등)을 사칭하는가?
-   - 신뢰를 주기 위해 여러 기관을 동시에 언급하는가?
+1. 🚨 피싱 의심 문구 및 요소
+   - 발견된 의심 문구, 도메인 이상, 위장 수법 나열
 
-3. 위험 패턴 매칭 (Pattern Matching)
-   - KISA/금감원이 경고한 최신 스미싱 문구와 일치하는가?
-   - RAG 데이터의 블랙리스트·사례집·패턴과 일치하는가?
+2. 🔗 URL 이상 여부
+   - 정상 / 의심 / 위험 중 선택 + 구체적 근거
 
-4. 인프라 신뢰도 (Technical Check)
-   - 생성된 지 며칠 되지 않은 신규 도메인인가?
-   - HTTPS를 사용하더라도 인증서가 신뢰할 수 없는 수준인가?
+3. 📊 RAG 기반 유사 사례 매칭
+   - 위의 참조 데이터 중 일치하거나 유사한 피싱 수법 명시
+   - 없으면 "유사 사례 없음 — 신종 수법 가능성"
 
-5. 심리 조작 분석 (Psychological Tactic)
-   - '긴급', '마감', '확인 요망' 등의 단어로 조급함을 유발하는가?
-   - 이벤트 당첨, 택배 미수령 등 클릭을 유도하는가?
+4. ⚠️ 위험도 판별
+   - 고위험 / 중위험 / 저위험 / 안전 중 하나만 명시
+   - 판단 근거를 RAG 데이터와 연결하여 설명
 
-[출력 형식 - 반드시 아래 JSON만 출력, 다른 텍스트 절대 금지]
-{{
-  "level": "고위험 또는 중위험 또는 저위험 또는 안전",
-  "items": [
-    {{
-      "title": "도메인 위장",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "발견된 구체적 증거와 수법 설명 (2~3문장)"
-    }},
-    {{
-      "title": "사칭 대상",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "발견된 구체적 증거와 수법 설명 (2~3문장)"
-    }},
-    {{
-      "title": "위험 패턴",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "RAG 데이터 매칭 결과 및 근거 (2~3문장)"
-    }},
-    {{
-      "title": "인프라 신뢰도",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "도메인 신뢰도, HTTPS 인증서 등 기술적 분석 (2~3문장)"
-    }},
-    {{
-      "title": "심리 조작",
-      "status": "danger 또는 warning 또는 safe",
-      "desc": "심리적 조작 요소 발견 여부 (2~3문장)"
-    }}
-  ],
-  "summary": "종합 의견 및 사용자 행동 지침 (3~4문장, AI 한계 명시 포함)"
-}}"""
+5. 💡 종합 분석 및 사용자 행동 권고
+   - 구체적인 대응 방법 안내
+   - AI 분석의 한계 명시 (100% 보장 불가)
+
+답변은 반드시 한국어로 작성하세요.
+"""
 
         try:
             response = client.models.generate_content(model="gemini-2.5-flash", contents=analysis_prompt)
             raw = response.text.strip()
-            # JSON 마크다운 제거
-            if raw.startswith('```'):
-                raw = raw.split('\n', 1)[1].rsplit('```', 1)[0]
-            # JSON 파싱 시도
+
+            # ── JSON 파싱 (강화된 버전) ───────────────────────
+            def safe_parse_json(text):
+                # 1) 마크다운 코드블록 제거
+                if '```' in text:
+                    text = text.split('```')[1]
+                    if text.startswith('json'):
+                        text = text[4:]
+                # 2) 앞뒤 공백 제거
+                text = text.strip()
+                # 3) JSON 시작/끝 찾기
+                start = text.find('{')
+                end   = text.rfind('}')
+                if start != -1 and end != -1:
+                    text = text[start:end+1]
+                return json.loads(text)
+
             try:
-                parsed = json.loads(raw)
+                parsed = safe_parse_json(raw)
                 ai_result = json.dumps(parsed, ensure_ascii=False)
                 level_str = parsed.get('level', '')
             except Exception:
+                # JSON 파싱 실패 시 텍스트 그대로 저장
                 ai_result = raw
                 level_str = raw
 

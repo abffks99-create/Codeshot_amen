@@ -7,7 +7,6 @@
   <title>CodeShot — 이미지 분석</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
-    /* ── 로딩 오버레이 (카드 뉴스 전용) ── */
     .apple-overlay {
       display: none;
       position: fixed; inset: 0; z-index: 9999;
@@ -16,51 +15,42 @@
       align-items: center;
       justify-content: center;
       padding: 24px 20px;
-      gap: 20px;
+      gap: 16px;
     }
     .apple-overlay.show { display: flex; }
-
-    /* 상단 진행 바 */
     .apple-bar-wrap {
       position: fixed; top: 0; left: 0; right: 0;
-      height: 5px; background: #EAECF0; z-index: 10000;
+      height: 6px; background: #EAECF0; z-index: 10000;
     }
     .apple-bar-fill {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, #2E90FA, #6366F1);
       transition: width 1s linear;
     }
-
-    .apple-title { font-size: 22px; font-weight: 800; color: #101828; letter-spacing: -0.03em; }
-    .apple-step  { font-size: 16px; color: #667085; }
-    .apple-timer { font-size: 15px; font-weight: 700; color: #2E90FA; }
-
-    /* 카드 뉴스 */
+    .apple-title { font-size: 22px; font-weight: 800; color: #101828; }
+    .apple-step  { font-size: 15px; color: #667085; }
+    .apple-timer { font-size: 16px; font-weight: 700; color: #2E90FA; }
     .tip-card {
       background: #fff;
       border: 2px solid #EAECF0;
       border-radius: 20px;
       padding: 32px 28px;
-      width: 100%;
-      max-width: 480px;
+      width: 100%; max-width: 460px;
       text-align: center;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
       animation: tipFadeIn 0.5s ease both;
     }
     @keyframes tipFadeIn {
-      from { opacity:0; transform: translateY(10px); }
-      to   { opacity:1; transform: translateY(0); }
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
-    .tip-emoji { font-size: 56px; margin-bottom: 16px; display: block; }
-    .tip-title { font-size: 22px; font-weight: 800; color: #101828; margin-bottom: 12px; line-height: 1.4; }
-    .tip-desc  { font-size: 17px; color: #344054; line-height: 1.8; word-break: keep-all; }
-    .tip-dots  { display:flex; gap:8px; justify-content:center; margin-top:20px; }
+    .tip-emoji { font-size: 52px; margin-bottom: 14px; display:block; }
+    .tip-title { font-size: 21px; font-weight: 800; color: #101828; margin-bottom: 12px; line-height:1.4; }
+    .tip-desc  { font-size: 16px; color: #344054; line-height: 1.8; word-break: keep-all; }
+    .tip-dots  { display:flex; gap:8px; justify-content:center; margin-top:18px; }
     .tip-dot   { width:10px; height:10px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
     .tip-dot.on { background:#2E90FA; }
-    .tip-label {
-      font-size: 13px; color: #98A2B3; font-weight: 600;
-      letter-spacing: 0.05em;
-    }
+    .tip-label { font-size:13px; color:#98A2B3; font-weight:600; }
   </style>
 </head>
 <body>
@@ -76,7 +66,7 @@
   </div>
 </nav>
 
-<!-- 로딩 오버레이 (카드 뉴스 전용) -->
+<!-- 로딩 오버레이 -->
 <div class="apple-overlay" id="apple-overlay">
   <div class="apple-bar-wrap">
     <div class="apple-bar-fill" id="bar-fill"></div>
@@ -90,7 +80,7 @@
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
-  <div class="tip-label">분석이 완료되면 자동으로 결과 화면으로 이동해요</div>
+  <div class="tip-label">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
 
 <div class="container">
@@ -210,25 +200,31 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
   }, 5000);
 
   let elapsed = 0;
+  const ring = document.getElementById('ring-fg');
   const bar  = document.getElementById('bar-fill');
   const timer = document.getElementById('timer-text');
   const stepEl = document.getElementById('step-text');
+  const circumference = 314;
 
   const interval = setInterval(() => {
     elapsed++;
     const pct = Math.min((elapsed / TOTAL) * 100, 98);
+    const offset = circumference - (circumference * pct / 100);
+    ring.style.strokeDashoffset = offset;
     bar.style.width = pct + '%';
 
     const remaining = Math.max(TOTAL - elapsed, 1);
     timer.textContent = `약 ${remaining}초 남음`;
 
+    // 단계 텍스트
     for (let i = steps.length - 1; i >= 0; i--) {
       if (pct >= steps[i].at) {
         stepEl.textContent = steps[i].text;
         break;
       }
     }
-    if (elapsed >= TOTAL * 3) clearInterval(interval);
+
+    if (elapsed >= TOTAL * 3) clearInterval(interval); // 안전장치
   }, 1000);
 });
 </script>
