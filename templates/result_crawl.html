@@ -5,6 +5,7 @@
   <meta name="theme-color" content="#2E90FA">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>CodeShot — URL 분석 결과</title>
+  {% if is_analyzing %}<meta http-equiv="refresh" content="5">{% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
     .url-preview-box {
