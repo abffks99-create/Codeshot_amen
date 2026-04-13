@@ -15,7 +15,7 @@ from openphish_updater import start_background_updater
 load_dotenv()
 
 # ─── Gemini API 설정 ────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get('AIzaSyC0aFKNsXJcxb5K86f0hly6f7p9I2a1vyc')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     raise ValueError("❌ GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.")
 client = genai.Client(api_key=GEMINI_API_KEY)
