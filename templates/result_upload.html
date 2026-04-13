@@ -141,7 +141,7 @@
     {% set raw = result.deep_result %}
     {% if raw and raw.startswith('{') %}
       {% set parsed = raw | from_json %}
-      {% for item in parsed.items %}
+      {% for item in parsed.items() %}
       <div style="display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:12px;margin-bottom:10px;
         {% if item.status == 'danger' %}background:#FEF3F2;border:1px solid #FECDCA;
         {% elif item.status == 'warning' %}background:#FFFBEB;border:1px solid #FDE68A;
