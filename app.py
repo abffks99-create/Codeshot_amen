@@ -9,7 +9,12 @@ from pathlib import Path
 import math
 from dotenv import load_dotenv
 from rag_engine import init_rag, search_rag, build_rag_context, check_blacklist_exact
-from openphish_updater import start_background_updater
+try:
+    from openphish_updater import start_background_updater
+    _has_updater = True
+except Exception as e:
+    print(f'⚠️ OpenPhish 로딩 실패(무시): {e}')
+    _has_updater = False
 
 # ─── 환경변수 로드 (.env 파일) ───────────────────────────────
 load_dotenv()
@@ -28,7 +33,8 @@ app.jinja_env.filters['from_json'] = json.loads  # 템플릿에서 JSON 파싱�
 init_rag()
 
 # ─── OpenPhish 자동 업데이트 시작 (12시간마다) ───────────────
-start_background_updater()
+if _has_updater:
+    start_background_updater()
 
 # ─── DB 연결 ────────────────────────────────────────────────
 def get_db():
@@ -599,4 +605,4 @@ def withdraw():
     session.clear(); return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

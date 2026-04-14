@@ -14,31 +14,13 @@ from chromadb.utils import embedding_functions
 import json, os, re
 from datetime import datetime
 
-# ─── 벡터DB 초기화 ───────────────────────────────────────────
-_DB_PATH = "./rag_db"  # 프로젝트 루트에 저장
-
-_embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-    model_name="jhgan/ko-sroberta-multitask"   # 한국어 특화 임베딩 모델
-)
-
-_client = chromadb.PersistentClient(path=_DB_PATH)
-
-# 컬렉션 3개 (소스별 분리)
-col_blacklist = _client.get_or_create_collection(
-    name="phishing_blacklist",
-    embedding_function=_embedding_fn,
-    metadata={"description": "피싱 URL 블랙리스트"}
-)
-col_cases = _client.get_or_create_collection(
-    name="phishing_cases",
-    embedding_function=_embedding_fn,
-    metadata={"description": "과거 피싱 사례집"}
-)
-col_patterns = _client.get_or_create_collection(
-    name="phishing_patterns",
-    embedding_function=_embedding_fn,
-    metadata={"description": "금융감독원·KISA 피싱 패턴"}
-)
+# ─── 전역 변수 (init_rag() 호출 후 사용 가능) ────────────────
+_DB_PATH = "./rag_db"
+_client = None
+_embedding_fn = None
+col_blacklist = None
+col_cases = None
+col_patterns = None
 
 
 # ════════════════════════════════════════════════════════════
@@ -285,11 +267,42 @@ def check_blacklist_exact(url: str) -> bool:
 # ════════════════════════════════════════════════════════════
 
 def init_rag():
-    """앱 시작 시 1회 호출 — DB가 비어있으면 시드 데이터 삽입"""
+    """앱 시작 시 1회 호출 — 모델 로딩 + DB 초기화"""
+    global _client, _embedding_fn, col_blacklist, col_cases, col_patterns
+
     print("🔍 RAG 지식베이스 초기화 중...")
+
+    # ── 임베딩 모델 로딩 (여기서만 실행) ──────────────────────
+    print("  📦 한국어 임베딩 모델 로딩 중...")
+    _embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="jhgan/ko-sroberta-multitask"
+    )
+
+    # ── ChromaDB 연결 ──────────────────────────────────────────
+    _client = chromadb.PersistentClient(path=_DB_PATH)
+
+    # ── 컬렉션 3개 생성 ───────────────────────────────────────
+    col_blacklist = _client.get_or_create_collection(
+        name="phishing_blacklist",
+        embedding_function=_embedding_fn,
+        metadata={"description": "피싱 URL 블랙리스트"}
+    )
+    col_cases = _client.get_or_create_collection(
+        name="phishing_cases",
+        embedding_function=_embedding_fn,
+        metadata={"description": "과거 피싱 사례집"}
+    )
+    col_patterns = _client.get_or_create_collection(
+        name="phishing_patterns",
+        embedding_function=_embedding_fn,
+        metadata={"description": "금융감독원·KISA 피싱 패턴"}
+    )
+
+    # ── 시드 데이터 삽입 ──────────────────────────────────────
     init_blacklist()
     init_cases()
     init_patterns()
+
     print(f"  ✅ 블랙리스트: {col_blacklist.count()}건")
     print(f"  ✅ 피싱 사례: {col_cases.count()}건")
     print(f"  ✅ 피싱 패턴: {col_patterns.count()}건")
