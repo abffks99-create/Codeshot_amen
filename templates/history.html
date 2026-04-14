@@ -88,30 +88,61 @@
   </div>
   <div class="page-title" style="margin-bottom:6px;">전체 분석 내역</div>
 
-  <!-- URL / 이미지 건수 요약 -->
+  <!-- URL / 이미지 건수 요약 (클릭 시 필터) -->
   <div style="display:flex;gap:10px;margin-bottom:18px;">
-    <div style="flex:1;background:#EFF8FF;border:1px solid #B2DDFF;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+    <!-- URL 필터 카드 -->
+    <a href="/history?tab=crawling" style="flex:1;text-decoration:none;
+      background:{% if tab == 'crawling' %}#2E90FA{% else %}#EFF8FF{% endif %};
+      border:2px solid {% if tab == 'crawling' %}#2E90FA{% else %}#B2DDFF{% endif %};
+      border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;
+      transition:all 0.2s;">
       <span style="font-size:22px;">🔗</span>
       <div>
-        <div style="font-size:20px;font-weight:800;color:#1570EF;">{{ url_cnt }}</div>
-        <div style="font-size:11px;color:#2E90FA;font-weight:600;">URL 분석</div>
+        <div style="font-size:20px;font-weight:800;color:{% if tab == 'crawling' %}#fff{% else %}#1570EF{% endif %};">{{ url_cnt }}</div>
+        <div style="font-size:11px;font-weight:600;color:{% if tab == 'crawling' %}rgba(255,255,255,0.8){% else %}#2E90FA{% endif %};">URL 분석</div>
       </div>
-      <a href="/crawl" style="margin-left:auto;font-size:11px;font-weight:700;color:#2E90FA;text-decoration:none;background:#fff;padding:5px 10px;border-radius:8px;border:1px solid #B2DDFF;">+ 새 분석</a>
-    </div>
-    <div style="flex:1;background:#ECFDF3;border:1px solid #A9EFC5;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+      {% if tab == 'crawling' %}
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.2);padding:5px 10px;border-radius:8px;">✓ 필터 중</span>
+      {% else %}
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:#2E90FA;background:#fff;padding:5px 10px;border-radius:8px;border:1px solid #B2DDFF;">클릭해서 보기</span>
+      {% endif %}
+    </a>
+    <!-- 이미지 필터 카드 -->
+    <a href="/history?tab=upload" style="flex:1;text-decoration:none;
+      background:{% if tab == 'upload' %}#12B76A{% else %}#ECFDF3{% endif %};
+      border:2px solid {% if tab == 'upload' %}#12B76A{% else %}#A9EFC5{% endif %};
+      border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;
+      transition:all 0.2s;">
       <span style="font-size:22px;">🖼</span>
       <div>
-        <div style="font-size:20px;font-weight:800;color:#027A48;">{{ img_cnt }}</div>
-        <div style="font-size:11px;color:#12B76A;font-weight:600;">이미지 분석</div>
+        <div style="font-size:20px;font-weight:800;color:{% if tab == 'upload' %}#fff{% else %}#027A48{% endif %};">{{ img_cnt }}</div>
+        <div style="font-size:11px;font-weight:600;color:{% if tab == 'upload' %}rgba(255,255,255,0.8){% else %}#12B76A{% endif %};">이미지 분석</div>
       </div>
-      <a href="/upload" style="margin-left:auto;font-size:11px;font-weight:700;color:#12B76A;text-decoration:none;background:#fff;padding:5px 10px;border-radius:8px;border:1px solid #A9EFC5;">+ 새 분석</a>
-    </div>
+      {% if tab == 'upload' %}
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.2);padding:5px 10px;border-radius:8px;">✓ 필터 중</span>
+      {% else %}
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:#12B76A;background:#fff;padding:5px 10px;border-radius:8px;border:1px solid #A9EFC5;">클릭해서 보기</span>
+      {% endif %}
+    </a>
   </div>
+
+  <!-- 전체 보기 버튼 (필터 중일 때만 표시) -->
+  {% if tab in ['crawling', 'upload'] %}
+  <div style="margin-bottom:12px;text-align:center;">
+    <a href="/history" style="font-size:13px;color:#667085;text-decoration:none;background:#F3F4F8;padding:7px 18px;border-radius:20px;font-weight:600;">
+      ✕ 필터 해제 — 전체 보기
+    </a>
+  </div>
+  {% endif %}
 
   <!-- 분석 내역 카드 -->
   <div class="card">
     <div class="section-header">
-      <div class="section-title">최근 분석 내역</div>
+      <div class="section-title">
+        {% if tab == 'crawling' %}🔗 URL 분석 내역
+        {% elif tab == 'upload' %}🖼 이미지 분석 내역
+        {% else %}최근 분석 내역{% endif %}
+      </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:12px;color:#98A2B3;">{{ page }} / {{ total_pages }} 페이지</span>
         {% if records %}
@@ -198,17 +229,17 @@
       <!-- 페이지네이션 -->
       <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid #F3F4F8;">
         {% if page > 1 %}
-        <a href="/history?page={{ page-1 }}" class="btn btn-secondary btn-sm" style="padding:6px 14px;">← 이전</a>
+        <a href="/history?tab={{ tab }}&page={{ page-1 }}" class="btn btn-secondary btn-sm" style="padding:6px 14px;">← 이전</a>
         {% endif %}
         {% for p in range(1, total_pages+1) %}
-        <a href="/history?page={{ p }}"
+        <a href="/history?tab={{ tab }}&page={{ p }}"
            style="padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;
                   {% if p == page %}background:#2E90FA; color:#fff; {% else %}background:#F3F4F8; color:#667085;{% endif %}">
           {{ p }}
         </a>
         {% endfor %}
         {% if page < total_pages %}
-        <a href="/history?page={{ page+1 }}" class="btn btn-secondary btn-sm" style="padding:6px 14px;">다음 →</a>
+        <a href="/history?tab={{ tab }}&page={{ page+1 }}" class="btn btn-secondary btn-sm" style="padding:6px 14px;">다음 →</a>
         {% endif %}
       </div>
 

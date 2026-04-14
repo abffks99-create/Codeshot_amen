@@ -13,7 +13,7 @@ try:
     from openphish_updater import start_background_updater
     _has_updater = True
 except Exception as e:
-    print(f'⚠️ OpenPhish 로딩 실패(무시): {e}')
+    print(f"⚠️ OpenPhish 업데이터 로딩 실패(무시): {e}")
     _has_updater = False
 
 # ─── 환경변수 로드 (.env 파일) ───────────────────────────────
@@ -190,24 +190,49 @@ def main():
 def history():
     if 'user_id' not in session: return redirect(url_for('login'))
     page = request.args.get('page', 1, type=int)
+    tab  = request.args.get('tab', 'all')  # all, crawling, upload
     per_page = 10
 
     db = get_db(); cur = db.cursor(dictionary=True)
-    query = """
-        SELECT c.cr_idx AS id, c.cr_url AS title, c.created_at,
-               d.ciritical_level, d.deep_idx AS analysis_id, 'crawling' AS type, c.cr_idx AS record_id
-        FROM tb_crawling c
-        LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
-        WHERE c.id = %s
-        UNION ALL
-        SELECT u.upload_idx AS id, u.file_name AS title, u.uploaded_at AS created_at,
-               d.deep_result AS ciritical_level, d.deep_idx AS analysis_id, 'upload' AS type, u.upload_idx AS record_id
-        FROM tb_upload u
-        LEFT JOIN tb_deep_upload d ON u.upload_idx = d.upload_idx
-        WHERE u.id = %s
-        ORDER BY created_at DESC
-    """
-    cur.execute(query, (session['user_id'], session['user_id']))
+
+    if tab == 'crawling':
+        # URL만 필터
+        query = """
+            SELECT c.cr_idx AS id, c.cr_url AS title, c.created_at,
+                   d.ciritical_level, d.deep_idx AS analysis_id, 'crawling' AS type, c.cr_idx AS record_id
+            FROM tb_crawling c
+            LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
+            WHERE c.id = %s ORDER BY c.created_at DESC
+        """
+        cur.execute(query, (session['user_id'],))
+    elif tab == 'upload':
+        # 이미지만 필터
+        query = """
+            SELECT u.upload_idx AS id, u.file_name AS title, u.uploaded_at AS created_at,
+                   d.deep_result AS ciritical_level, d.deep_idx AS analysis_id, 'upload' AS type, u.upload_idx AS record_id
+            FROM tb_upload u
+            LEFT JOIN tb_deep_upload d ON u.upload_idx = d.upload_idx
+            WHERE u.id = %s ORDER BY u.uploaded_at DESC
+        """
+        cur.execute(query, (session['user_id'],))
+    else:
+        # 전체
+        query = """
+            SELECT c.cr_idx AS id, c.cr_url AS title, c.created_at,
+                   d.ciritical_level, d.deep_idx AS analysis_id, 'crawling' AS type, c.cr_idx AS record_id
+            FROM tb_crawling c
+            LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
+            WHERE c.id = %s
+            UNION ALL
+            SELECT u.upload_idx AS id, u.file_name AS title, u.uploaded_at AS created_at,
+                   d.deep_result AS ciritical_level, d.deep_idx AS analysis_id, 'upload' AS type, u.upload_idx AS record_id
+            FROM tb_upload u
+            LEFT JOIN tb_deep_upload d ON u.upload_idx = d.upload_idx
+            WHERE u.id = %s
+            ORDER BY created_at DESC
+        """
+        cur.execute(query, (session['user_id'], session['user_id']))
+
     all_records = cur.fetchall()
 
     cur.execute("SELECT COUNT(*) AS cnt FROM tb_crawling WHERE id=%s", (session['user_id'],))
@@ -221,7 +246,7 @@ def history():
     records = all_records[(page-1)*per_page : page*per_page]
 
     return render_template('history.html', records=records, page=page,
-                           total_pages=total_pages, url_cnt=url_cnt, img_cnt=img_cnt)
+                           total_pages=total_pages, url_cnt=url_cnt, img_cnt=img_cnt, tab=tab)
 
 # ─── 분석 내역 개별 삭제 ────────────────────────────────────
 @app.route('/delete/upload/<int:upload_idx>', methods=['POST'])
