@@ -160,17 +160,17 @@
   <!-- 자동 순환 안내 카드 -->
   <div class="card" style="padding:0;overflow:hidden;">
     <!-- 경고 헤더 -->
-    <div style="background:#FEF3F2;border-bottom:1px solid #FECDCA;padding:12px 16px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:16px;">⚠️</span>
-      <span style="font-size:13px;font-weight:700;color:#B42318;">AI 분석은 참고용입니다 — 최종 판단은 본인이 직접 하세요</span>
+    <div style="background:#FEF3F2;border-bottom:1px solid #FECDCA;padding:14px 18px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">⚠️</span>
+      <span style="font-size:14px;font-weight:700;color:#B42318;">AI 분석은 참고용입니다 — 최종 판단은 본인이 직접 하세요</span>
     </div>
     <!-- 문구 영역 (고정 높이) -->
-    <div style="padding:16px;display:flex;align-items:center;gap:12px;min-height:72px;">
-      <span id="up-tip-icon" style="font-size:28px;flex-shrink:0;width:36px;text-align:center;transition:opacity 0.35s;">🛡</span>
-      <span id="up-tip-text" style="font-size:13px;color:#667085;line-height:1.7;transition:opacity 0.35s;flex:1;"></span>
+    <div style="padding:22px 20px;display:flex;align-items:center;gap:16px;min-height:100px;">
+      <span id="up-tip-icon" style="font-size:40px;flex-shrink:0;width:48px;text-align:center;transition:opacity 0.4s;">🛡</span>
+      <span id="up-tip-text" style="font-size:16px;color:#344054;line-height:1.8;transition:opacity 0.4s;flex:1;font-weight:500;"></span>
     </div>
-    <!-- 점 인디케이터 -->
-    <div style="padding:0 16px 12px;display:flex;gap:5px;" id="up-tip-dots"></div>
+    <!-- 클릭 가능한 점 인디케이터 -->
+    <div style="padding:0 20px 16px;display:flex;gap:8px;align-items:center;" id="up-tip-dots"></div>
   </div>
 </div>
 
@@ -185,7 +185,9 @@ const UP_TIPS = [
   { icon:'🚨', text:'이미 링크를 눌렀다면 즉시 비행기 모드로 전환하고 금융사에 연락하세요.' },
 ];
 let upIdx = 0;
-function renderUpTip(idx) {
+let upTimer = null;
+
+function renderUpTip(idx, fromClick) {
   const icon = document.getElementById('up-tip-icon');
   const text = document.getElementById('up-tip-text');
   const dots = document.getElementById('up-tip-dots');
@@ -194,16 +196,26 @@ function renderUpTip(idx) {
     icon.textContent = UP_TIPS[idx].icon;
     text.textContent = UP_TIPS[idx].text;
     icon.style.opacity = text.style.opacity = '1';
-  }, 350);
+  }, 380);
+  // 점 (클릭 가능)
   dots.innerHTML = '';
   UP_TIPS.forEach((_, i) => {
     const d = document.createElement('div');
-    d.style.cssText = `width:6px;height:6px;border-radius:50%;transition:background 0.3s;background:${i===idx?'#F04438':'#EAECF0'};`;
+    d.style.cssText = `width:${i===idx?'22px':'9px'};height:9px;border-radius:99px;cursor:pointer;transition:all 0.3s;background:${i===idx?'#F04438':'#EAECF0'};`;
+    d.title = `${i+1}번 안내 보기`;
+    d.addEventListener('click', () => {
+      upIdx = i;
+      renderUpTip(i, true);
+      // 클릭 시 타이머 리셋
+      clearInterval(upTimer);
+      upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUpTip(upIdx); }, 6000);
+    });
     dots.appendChild(d);
   });
 }
+
 renderUpTip(0);
-setInterval(() => { upIdx = (upIdx+1) % UP_TIPS.length; renderUpTip(upIdx); }, 3500);
+upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUpTip(upIdx); }, 6000);
 
 function showFile(input) {
   const file = input.files[0];
