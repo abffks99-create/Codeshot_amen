@@ -8,51 +8,28 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
     .apple-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(255,255,255,0.96);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: #F9FAFB; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 20px;
     }
     .apple-overlay.show { display: flex; }
-    .apple-ring-wrap { position: relative; width: 120px; height: 120px; }
-    .apple-icon {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 48px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
-      50% { transform: translate(-50%,-50%) scale(1.12); opacity:0.8; }
-    }
-    .apple-ring-svg { width: 120px; height: 120px; transform: rotate(-90deg); }
-    .apple-ring-bg { fill: none; stroke: #E5E7EB; stroke-width: 6; }
-    .apple-ring-fg { fill: none; stroke: #F04438; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 314; transition: stroke-dashoffset 1s linear; }
-    .apple-title { font-size: 20px; font-weight: 700; color: #101828; letter-spacing: -0.03em; }
-    .apple-sub { font-size: 14px; color: #667085; margin-top: -16px; }
-    .apple-bar-wrap { width: 240px; height: 6px; background: #F2F4F7; border-radius: 99px; overflow: hidden; }
-    .apple-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #F04438, #F97316); border-radius: 99px; transition: width 1s linear; }
-    .apple-timer { font-size: 13px; font-weight: 600; color: #F04438; margin-top: -12px; }
-    .apple-step { font-size: 13px; color: #98A2B3; min-height: 20px; }
     .tip-card {
-      background: #fff; border: 1px solid #EAECF0; border-radius: 14px;
-      padding: 16px 20px; width: 280px; text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      background: #fff; border: 2px solid #EAECF0; border-radius: 24px;
+      padding: 40px 32px; width: 100%; max-width: 500px;
+      text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.10);
       animation: tipFadeIn 0.5s ease both;
     }
-    @keyframes tipFadeIn {
-      from { opacity:0; transform: translateY(6px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-    .tip-emoji { font-size: 26px; margin-bottom: 6px; }
-    .tip-title { font-size: 13px; font-weight: 700; color: #101828; margin-bottom: 4px; }
-    .tip-desc  { font-size: 12px; color: #667085; line-height: 1.6; }
-    .tip-dots  { display:flex; gap:5px; justify-content:center; margin-top:8px; }
-    .tip-dot   { width:6px; height:6px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
+    @keyframes tipFadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+    .tip-emoji { font-size: 64px; margin-bottom: 18px; display: block; }
+    .tip-title { font-size: 24px; font-weight: 800; color: #101828; margin-bottom: 14px; line-height: 1.4; word-break: keep-all; }
+    .tip-desc  { font-size: 17px; color: #344054; line-height: 1.9; word-break: keep-all; word-wrap: break-word; white-space: normal; }
+    .tip-dots  { display:flex; gap:10px; justify-content:center; margin-top:22px; }
+    .tip-dot   { width:11px; height:11px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
     .tip-dot.on { background:#F04438; }
+    .apple-timer { font-size: 18px; font-weight: 700; color: #F04438; }
+    .apple-bar-wrap { width: 100%; max-width: 500px; height: 8px; background: #EAECF0; border-radius: 99px; overflow: hidden; }
+    .apple-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#F04438,#F97316); border-radius: 99px; transition: width 1s linear; }
   </style>
 </head>
 <body>
@@ -62,38 +39,24 @@
     <span class="logo-text">CodeShot</span>
   </a>
   <div class="nav-links">
-    <a href="/main">홈</a>
     <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
     <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
     <a href="/logout" class="btn-logout">로그아웃</a>
   </div>
 </nav>
 
-<!-- Apple 스타일 로딩 -->
+<!-- 로딩 오버레이 -->
 <div class="apple-overlay" id="apple-overlay">
-  <div class="apple-ring-wrap">
-    <svg class="apple-ring-svg" viewBox="0 0 120 120">
-      <circle class="apple-ring-bg" cx="60" cy="60" r="50"/>
-      <circle class="apple-ring-fg" id="ring-fg" cx="60" cy="60" r="50"/>
-    </svg>
-    <div class="apple-icon">🔗</div>
-  </div>
-  <div class="apple-title">URL 분석 중</div>
-  <div class="apple-step" id="step-text">웹사이트에 접속하는 중...</div>
-  <div class="apple-bar-wrap">
-    <div class="apple-bar-fill" id="bar-fill"></div>
-  </div>
-  <div class="apple-timer" id="timer-text">약 30초 남음</div>
-
-  <!-- 피싱 예방 팁 -->
   <div class="tip-card" id="tip-card">
-    <div class="tip-emoji" id="tip-emoji">🛡</div>
+    <span class="tip-emoji" id="tip-emoji">🔗</span>
     <div class="tip-title" id="tip-title">잠깐! 피싱 예방 TIP</div>
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
+  <div class="apple-timer" id="timer-text">약 30초 남음</div>
+  <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
+  <div style="font-size:13px;color:#98A2B3;font-weight:600;">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
-
 <div class="container">
   <div class="card">
     <div class="page-title">URL 분석</div>

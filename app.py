@@ -540,11 +540,33 @@ def result_crawl(deep_idx):
 @app.route('/delete/all_records', methods=['POST'])
 def delete_all_records():
     if 'user_id' not in session: return redirect(url_for('login'))
-    db = get_db(); cur = db.cursor()
-    cur.execute("DELETE FROM tb_crawling WHERE id=%s", (session['user_id'],))
-    cur.execute("DELETE FROM tb_upload WHERE id=%s", (session['user_id'],))
-    db.commit(); cur.close(); db.close()
-    return redirect(url_for('main'))
+    uid = session['user_id']
+    db = get_db()
+    db.autocommit = False
+    cur = db.cursor()
+    try:
+        # 자식 테이블 먼저 삭제 (외래키 순서 준수)
+        cur.execute("""
+            DELETE dc FROM tb_deep_crawling dc
+            INNER JOIN tb_crawling c ON dc.crawling_idx = c.cr_idx
+            WHERE c.id = %s
+        """, (uid,))
+        cur.execute("""
+            DELETE du FROM tb_deep_upload du
+            INNER JOIN tb_upload u ON du.upload_idx = u.upload_idx
+            WHERE u.id = %s
+        """, (uid,))
+        cur.execute("DELETE FROM tb_crawling WHERE id=%s", (uid,))
+        cur.execute("DELETE FROM tb_upload WHERE id=%s", (uid,))
+        db.commit()
+        print(f"[전체삭제] 완료 - user: {uid}")
+    except Exception as e:
+        db.rollback()
+        print(f"[전체삭제 오류] {e}")
+    finally:
+        cur.close()
+        db.close()
+    return redirect('/history')
 
 # ─── UC-104 : 알림 ───────────────────────────────────────────
 @app.route('/alerts')
