@@ -33,6 +33,7 @@
     <span class="logo-text">CodeShot</span>
   </a>
   <div class="nav-links">
+    <a href="/main">홈</a>
     <a href="/upload">이미지 분석</a>
     <a href="/crawl">URL 분석</a>
     <a href="/alerts">알림</a>
@@ -48,7 +49,7 @@
       <svg style="width:44px;height:44px;" viewBox="0 0 48 48" fill="none"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div class="hero-body">
-      <div class="hero-tag">🛡 피싱 탐지 플랫폼</div>
+      <div class="hero-tag" style="display:inline-flex;align-items:center;"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3.5"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3.5"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>피싱 탐지 플랫폼</div>
       <div class="hero-title">안녕하세요, {{ session['user_name'] }}님</div>
       <div class="hero-sub">의심스러운 URL이나 이미지를 분석해 피싱 여부를 즉시 확인하세요</div>
     </div>
@@ -107,7 +108,7 @@
 .step-card { background: #fff; border: 1px solid #EAECF0; border-radius: 16px; padding: 28px 24px; text-align: center; }
 .step-num { width: 48px; height: 48px; border-radius: 50%; background: #2E90FA; color: #fff; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
 .step-title { font-size: 16px; font-weight: 700; color: #101828; margin-bottom: 8px; }
-.step-desc { font-size: 13px; color: #667085; line-height: 1.7; word-break: keep-all; word-wrap: break-word; white-space: normal; }
+.step-desc { font-size: 13px; color: #667085; line-height: 1.7; word-break: keep-all; word-wrap: break-word; }
 @media (max-width: 768px) {
   .info-row, .info-row.reverse { flex-direction: column; }
   .step-grid { grid-template-columns: 1fr; }
@@ -164,7 +165,7 @@
     <div class="info-text">
       <div class="info-badge danger">🚨 피싱 주의</div>
       <div class="info-h white">클릭 전에<br>반드시 확인하세요</div>
-      <div class="info-p white" style="word-break:keep-all;">피싱 공격은 매년 급증하고 있습니다.<br>문자나 카카오톡으로 받은 링크, 이메일 속 첨부 이미지 —<br>클릭하기 전에 CodeShot으로 먼저 확인하세요.</div>
+      <div class="info-p white" style="word-break:keep-all;">피싱 공격은 매년 급증하고 있습니다.<br>문자나 카카오톡으로 받은 링크, 이메일 속 첨부 이미지<br>클릭하기 전에 CodeShot으로 먼저 확인하세요.</div>
       <div class="info-feature-list" style="margin-top:24px;">
         <div class="info-feature">
           <div class="info-feature-icon" style="background:#1D2939;">⚡</div>
@@ -208,12 +209,12 @@
     <div class="step-card">
       <div class="step-num">2</div>
       <div class="step-title">AI 자동 분석</div>
-      <div class="step-desc">Gemini AI가 피싱 패턴,<br>URL 이상 여부, 의심 문구를 자동으로 분석합니다.</div>
+      <div class="step-desc" style="white-space:nowrap;">Gemini AI가 피싱 패턴, URL 이상 여부,<br>의심 문구를 자동으로 분석합니다.</div>
     </div>
     <div class="step-card">
       <div class="step-num">3</div>
       <div class="step-title">결과 확인</div>
-      <div class="step-desc">고위험 / 중위험 / 저위험 / 안전 등급으로<br>결과를 확인하고 대응하세요.</div>
+      <div class="step-desc">고위험 / 중위험 / 저위험 / 안전<br>등급으로 결과를 확인하고 대응하세요.</div>
     </div>
   </div>
 </div>
