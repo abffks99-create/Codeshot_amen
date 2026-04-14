@@ -203,6 +203,8 @@
           <!-- 삭제 -->
           <form method="POST" action="{{ del_action }}"
                 onsubmit="return confirm('이 내역을 삭제할까요?')" style="flex-shrink:0;">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="hidden" name="page" value="{{ page }}">
             <button type="submit" style="background:none;border:none;cursor:pointer;color:#FDA29B;font-size:16px;padding:4px 6px;">🗑</button>
           </form>
         </div>

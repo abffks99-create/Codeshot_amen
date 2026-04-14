@@ -252,18 +252,28 @@ def history():
 @app.route('/delete/upload/<int:upload_idx>', methods=['POST'])
 def delete_upload(upload_idx):
     if 'user_id' not in session: return redirect(url_for('login'))
+    tab  = request.form.get('tab', 'all')
+    try: page = int(request.form.get('page', 1))
+    except: page = 1
     db = get_db(); cur = db.cursor()
+    # 자식 테이블(tb_deep_upload) 먼저 삭제 후 부모(tb_upload) 삭제
+    cur.execute("DELETE FROM tb_deep_upload WHERE upload_idx=%s", (upload_idx,))
     cur.execute("DELETE FROM tb_upload WHERE upload_idx=%s AND id=%s", (upload_idx, session['user_id']))
     db.commit(); cur.close(); db.close()
-    return redirect(url_for('main'))
+    return redirect(url_for('history', tab=tab, page=page))
 
 @app.route('/delete/crawl/<int:cr_idx>', methods=['POST'])
 def delete_crawl(cr_idx):
     if 'user_id' not in session: return redirect(url_for('login'))
+    tab  = request.form.get('tab', 'all')
+    try: page = int(request.form.get('page', 1))
+    except: page = 1
     db = get_db(); cur = db.cursor()
+    # 자식 테이블(tb_deep_crawling) 먼저 삭제 후 부모(tb_crawling) 삭제
+    cur.execute("DELETE FROM tb_deep_crawling WHERE crawling_idx=%s", (cr_idx,))
     cur.execute("DELETE FROM tb_crawling WHERE cr_idx=%s AND id=%s", (cr_idx, session['user_id']))
     db.commit(); cur.close(); db.close()
-    return redirect(url_for('main'))
+    return redirect(url_for('history', tab=tab, page=page))
 
 # ─── UC-102 : 이미지 업로드 및 분석 ─────────────────────────
 @app.route('/upload', methods=['GET','POST'])
