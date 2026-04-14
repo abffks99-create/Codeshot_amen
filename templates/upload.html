@@ -6,34 +6,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>CodeShot — 이미지 분석</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
+  <style>
+    /* Apple 스타일 로딩 오버레이 */
     .apple-overlay {
-      display: none; position: fixed; inset: 0; z-index: 9999;
-      background: #F9FAFB; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 32px 20px; gap: 20px;
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(255,255,255,0.96);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
     }
     .apple-overlay.show { display: flex; }
+
+    /* 아이콘 + 링 */
+    .apple-ring-wrap {
+      position: relative;
+      width: 120px; height: 120px;
+    }
+    .apple-icon {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
+      50% { transform: translate(-50%,-50%) scale(1.12); opacity:0.8; }
+    }
+    .apple-ring-svg {
+      width: 120px; height: 120px;
+      transform: rotate(-90deg);
+    }
+    .apple-ring-bg {
+      fill: none; stroke: #E5E7EB; stroke-width: 6;
+    }
+    .apple-ring-fg {
+      fill: none; stroke: #2E90FA; stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 314;
+      stroke-dashoffset: 314;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    /* 텍스트 */
+    .apple-title {
+      font-size: 20px; font-weight: 700;
+      color: #101828; letter-spacing: -0.03em;
+    }
+    .apple-sub {
+      font-size: 14px; color: #667085;
+      margin-top: -16px;
+    }
+
+    /* 타이머 바 */
+    .apple-bar-wrap {
+      width: 240px; height: 6px;
+      background: #F2F4F7;
+      border-radius: 99px; overflow: hidden;
+    }
+    .apple-bar-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #2E90FA, #6366F1);
+      border-radius: 99px;
+      transition: width 1s linear;
+    }
+
+    /* 남은 시간 */
+    .apple-timer {
+      font-size: 13px; font-weight: 600;
+      color: #2E90FA; margin-top: -12px;
+    }
+
+    /* 단계 텍스트 */
+    .apple-step {
+      font-size: 13px; color: #98A2B3;
+      min-height: 20px;
+      transition: opacity 0.3s;
+    }
     .tip-card {
-      background: #fff; border: 2px solid #EAECF0; border-radius: 24px;
-      padding: 40px 32px; width: 100%; max-width: 500px;
-      text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+      background: #fff; border: 1px solid #EAECF0; border-radius: 14px;
+      padding: 16px 20px; width: 280px; text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       animation: tipFadeIn 0.5s ease both;
     }
     @keyframes tipFadeIn {
-      from { opacity:0; transform:translateY(12px); }
-      to   { opacity:1; transform:translateY(0); }
+      from { opacity:0; transform: translateY(6px); }
+      to   { opacity:1; transform: translateY(0); }
     }
-    .tip-emoji { font-size: 64px; margin-bottom: 18px; display: block; }
-    .tip-title { font-size: 24px; font-weight: 800; color: #101828; margin-bottom: 14px; line-height: 1.4; }
-    .tip-desc  { font-size: 17px; color: #344054; line-height: 1.9; word-break: keep-all; }
-    .tip-dots  { display:flex; gap:10px; justify-content:center; margin-top:22px; }
-    .tip-dot   { width:11px; height:11px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
+    .tip-emoji { font-size: 26px; margin-bottom: 6px; }
+    .tip-title { font-size: 13px; font-weight: 700; color: #101828; margin-bottom: 4px; }
+    .tip-desc  { font-size: 12px; color: #667085; line-height: 1.6; }
+    .tip-dots  { display:flex; gap:5px; justify-content:center; margin-top:8px; }
+    .tip-dot   { width:6px; height:6px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
     .tip-dot.on { background:#2E90FA; }
-    .apple-timer { font-size: 18px; font-weight: 700; color: #2E90FA; }
-    .apple-bar-wrap { width: 100%; max-width: 500px; height: 8px; background: #EAECF0; border-radius: 99px; overflow: hidden; }
-    .apple-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2E90FA, #6366F1); border-radius: 99px; transition: width 1s linear; }
-    .tip-label { font-size: 14px; color: #98A2B3; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -49,17 +116,29 @@
   </div>
 </nav>
 
-<!-- 로딩 오버레이 -->
+<!-- Apple 스타일 로딩 -->
 <div class="apple-overlay" id="apple-overlay">
+  <div class="apple-ring-wrap">
+    <svg class="apple-ring-svg" viewBox="0 0 120 120">
+      <circle class="apple-ring-bg" cx="60" cy="60" r="50"/>
+      <circle class="apple-ring-fg" id="ring-fg" cx="60" cy="60" r="50"/>
+    </svg>
+    <div class="apple-icon">🖼</div>
+  </div>
+  <div class="apple-title">이미지 분석 중</div>
+  <div class="apple-step" id="step-text">이미지를 업로드하는 중...</div>
+  <div class="apple-bar-wrap">
+    <div class="apple-bar-fill" id="bar-fill"></div>
+  </div>
+  <div class="apple-timer" id="timer-text">약 30초 남음</div>
+
+  <!-- 피싱 예방 팁 -->
   <div class="tip-card" id="tip-card">
-    <span class="tip-emoji" id="tip-emoji">🛡</span>
+    <div class="tip-emoji" id="tip-emoji">🛡</div>
     <div class="tip-title" id="tip-title">잠깐! 피싱 예방 TIP</div>
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
-  <div class="apple-timer" id="timer-text">약 30초 남음</div>
-  <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
-  <div class="tip-label">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
 
 <div class="container">
@@ -78,13 +157,66 @@
       <button type="submit" class="btn btn-primary" style="margin-top:16px;">🔍 분석 시작</button>
     </form>
   </div>
-  <div class="info-box yellow">
-    <div class="info-title">⚠ 분석 안내</div>
-    <p>AI(Gemini)가 피싱 여부를 분석합니다. AI 판단이므로 최종 판단은 사용자가 직접 해야 해요.<br>분석에 약 20~40초 소요됩니다.</p>
+  <!-- 자동으로 바뀌는 안내 박스 -->
+  <div style="border-radius:16px;overflow:hidden;margin-bottom:8px;">
+    <div style="background:#F04438;padding:12px 18px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">⚠️</span>
+      <span style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.02em;">AI 분석 결과는 참고용 — 최종 판단은 본인이 직접 하세요</span>
+    </div>
+    <div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-top:none;padding:16px 18px;min-height:64px;display:flex;align-items:center;gap:12px;">
+      <span id="tip-icon-upload" style="font-size:26px;flex-shrink:0;transition:opacity 0.4s;">🛡</span>
+      <span id="tip-text-upload" style="font-size:14px;color:#344054;line-height:1.7;transition:opacity 0.4s;"></span>
+    </div>
+    <!-- 인디케이터 점 -->
+    <div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-top:none;padding:0 18px 12px;display:flex;gap:6px;" id="tip-dots-upload"></div>
   </div>
 </div>
 
 <script>
+// ── 자동 순환 안내 문구 (이미지 업로드) ──────────────────────
+const UPLOAD_TIPS = [
+  { icon:'⚠️', text:'AI 분석은 참고용이에요. 피싱 여부는 전문기관을 통해 최종 확인하세요.' },
+  { icon:'🖼', text:'문자 캡처, 카카오톡 스크린샷, 앱 화면 등 의심스러운 이미지를 업로드해보세요.' },
+  { icon:'⏱', text:'분석에 약 20~40초 소요됩니다. 분석 중 화면을 벗어나지 마세요.' },
+  { icon:'🔒', text:'업로드한 이미지는 분석 후 저장되지 않아요. 개인정보 걱정 없이 사용하세요.' },
+  { icon:'📞', text:'피싱이 의심되면 한국인터넷진흥원(KISA) 118로 즉시 신고하세요.' },
+  { icon:'🏦', text:'금융기관은 절대 문자로 앱 설치나 개인정보를 요구하지 않아요.' },
+  { icon:'🚨', text:'이미 링크를 클릭했다면 즉시 비행기 모드로 전환하고 금융사에 연락하세요.' },
+];
+
+let uploadTipIdx = 0;
+
+function renderUploadTip(idx) {
+  const iconEl = document.getElementById('tip-icon-upload');
+  const textEl = document.getElementById('tip-text-upload');
+  const dotsEl = document.getElementById('tip-dots-upload');
+
+  // 페이드 아웃
+  iconEl.style.opacity = '0';
+  textEl.style.opacity = '0';
+
+  setTimeout(() => {
+    iconEl.textContent = UPLOAD_TIPS[idx].icon;
+    textEl.textContent = UPLOAD_TIPS[idx].text;
+    iconEl.style.opacity = '1';
+    textEl.style.opacity = '1';
+  }, 400);
+
+  // 점 업데이트
+  dotsEl.innerHTML = '';
+  UPLOAD_TIPS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = `width:7px;height:7px;border-radius:50%;background:${i===idx?'#F04438':'#FECDCA'};transition:background 0.3s;`;
+    dotsEl.appendChild(d);
+  });
+}
+
+renderUploadTip(0);
+setInterval(() => {
+  uploadTipIdx = (uploadTipIdx + 1) % UPLOAD_TIPS.length;
+  renderUploadTip(uploadTipIdx);
+}, 3000);
+
 function showFile(input) {
   const file = input.files[0];
   if (!file) return;
