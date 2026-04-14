@@ -7,100 +7,29 @@
   <title>CodeShot — 이미지 분석</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
-    /* Apple 스타일 로딩 오버레이 */
     .apple-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(255,255,255,0.96);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: #F9FAFB; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 20px;
     }
     .apple-overlay.show { display: flex; }
-
-    /* 아이콘 + 링 */
-    .apple-ring-wrap {
-      position: relative;
-      width: 120px; height: 120px;
-    }
-    .apple-icon {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 48px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
-      50% { transform: translate(-50%,-50%) scale(1.12); opacity:0.8; }
-    }
-    .apple-ring-svg {
-      width: 120px; height: 120px;
-      transform: rotate(-90deg);
-    }
-    .apple-ring-bg {
-      fill: none; stroke: #E5E7EB; stroke-width: 6;
-    }
-    .apple-ring-fg {
-      fill: none; stroke: #2E90FA; stroke-width: 6;
-      stroke-linecap: round;
-      stroke-dasharray: 314;
-      stroke-dashoffset: 314;
-      transition: stroke-dashoffset 1s linear;
-    }
-
-    /* 텍스트 */
-    .apple-title {
-      font-size: 20px; font-weight: 700;
-      color: #101828; letter-spacing: -0.03em;
-    }
-    .apple-sub {
-      font-size: 14px; color: #667085;
-      margin-top: -16px;
-    }
-
-    /* 타이머 바 */
-    .apple-bar-wrap {
-      width: 240px; height: 6px;
-      background: #F2F4F7;
-      border-radius: 99px; overflow: hidden;
-    }
-    .apple-bar-fill {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, #2E90FA, #6366F1);
-      border-radius: 99px;
-      transition: width 1s linear;
-    }
-
-    /* 남은 시간 */
-    .apple-timer {
-      font-size: 13px; font-weight: 600;
-      color: #2E90FA; margin-top: -12px;
-    }
-
-    /* 단계 텍스트 */
-    .apple-step {
-      font-size: 13px; color: #98A2B3;
-      min-height: 20px;
-      transition: opacity 0.3s;
-    }
     .tip-card {
-      background: #fff; border: 1px solid #EAECF0; border-radius: 14px;
-      padding: 16px 20px; width: 280px; text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      background: #fff; border: 2px solid #EAECF0; border-radius: 24px;
+      padding: 40px 32px; width: 100%; max-width: 500px;
+      text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.10);
       animation: tipFadeIn 0.5s ease both;
     }
-    @keyframes tipFadeIn {
-      from { opacity:0; transform: translateY(6px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-    .tip-emoji { font-size: 26px; margin-bottom: 6px; }
-    .tip-title { font-size: 13px; font-weight: 700; color: #101828; margin-bottom: 4px; }
-    .tip-desc  { font-size: 12px; color: #667085; line-height: 1.6; }
-    .tip-dots  { display:flex; gap:5px; justify-content:center; margin-top:8px; }
-    .tip-dot   { width:6px; height:6px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
+    @keyframes tipFadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+    .tip-emoji { font-size: 64px; margin-bottom: 18px; display: block; }
+    .tip-title { font-size: 22px; font-weight: 800; color: #101828; margin-bottom: 12px; line-height: 1.4; word-break: keep-all; }
+    .tip-desc  { font-size: 15px; color: #475467; line-height: 2.0; word-break: keep-all; word-wrap: break-word; white-space: pre-line; letter-spacing: -0.01em; }
+    .tip-dots  { display:flex; gap:10px; justify-content:center; margin-top:22px; }
+    .tip-dot   { width:11px; height:11px; border-radius:50%; background:#EAECF0; transition:background 0.3s; }
     .tip-dot.on { background:#2E90FA; }
+    .apple-timer { font-size: 18px; font-weight: 700; color: #2E90FA; }
+    .apple-bar-wrap { width: 100%; max-width: 500px; height: 8px; background: #EAECF0; border-radius: 99px; overflow: hidden; }
+    .apple-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#2E90FA,#6366F1); border-radius: 99px; transition: width 1s linear; }
   </style>
 </head>
 <body>
@@ -116,31 +45,18 @@
   </div>
 </nav>
 
-<!-- Apple 스타일 로딩 -->
+<!-- 로딩 오버레이 -->
 <div class="apple-overlay" id="apple-overlay">
-  <div class="apple-ring-wrap">
-    <svg class="apple-ring-svg" viewBox="0 0 120 120">
-      <circle class="apple-ring-bg" cx="60" cy="60" r="50"/>
-      <circle class="apple-ring-fg" id="ring-fg" cx="60" cy="60" r="50"/>
-    </svg>
-    <div class="apple-icon">🖼</div>
-  </div>
-  <div class="apple-title">이미지 분석 중</div>
-  <div class="apple-step" id="step-text">이미지를 업로드하는 중...</div>
-  <div class="apple-bar-wrap">
-    <div class="apple-bar-fill" id="bar-fill"></div>
-  </div>
-  <div class="apple-timer" id="timer-text">약 30초 남음</div>
-
-  <!-- 피싱 예방 팁 -->
   <div class="tip-card" id="tip-card">
-    <div class="tip-emoji" id="tip-emoji">🛡</div>
+    <span class="tip-emoji" id="tip-emoji">🖼</span>
     <div class="tip-title" id="tip-title">잠깐! 피싱 예방 TIP</div>
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
+  <div class="apple-timer" id="timer-text">약 30초 남음</div>
+  <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
+  <div style="font-size:13px;color:#98A2B3;font-weight:600;">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
-
 <div class="container">
   <div class="card">
     <div class="page-title">이미지 분석</div>
@@ -255,13 +171,13 @@ const steps = [
 ];
 
 const TIPS = [
-  { emoji:'🔍', title:'URL을 꼼꼼히 확인하세요', desc:'정식 사이트와 철자 하나만 다른 도메인(예: naver vs nave r)을 사용하는 게 피싱의 전형적인 수법이에요.' },
-  { emoji:'🔒', title:'자물쇠(HTTPS)만 믿지 마세요', desc:'HTTPS라도 피싱 사이트일 수 있어요. 도메인 주소 자체가 올바른지 반드시 확인하세요.' },
-  { emoji:'📲', title:'문자·카톡 링크는 특히 주의', desc:'금융기관과 공공기관은 문자로 로그인 링크를 절대 보내지 않아요. 의심스러우면 공식 앱으로 직접 접속하세요.' },
-  { emoji:'🎁', title:'"당첨됐어요!" 는 99% 피싱', desc:'이벤트 당첨, 택배 미수령 등의 문자는 피싱의 대표 사례예요. 링크 클릭 전 반드시 확인하세요.' },
-  { emoji:'🧠', title:'개인정보 입력 전 한 번 더 확인', desc:'아이디·비밀번호·주민번호를 요구하는 사이트는 반드시 공식 사이트인지 확인 후 입력하세요.' },
-  { emoji:'📞', title:'모르는 번호 전화도 피싱일 수 있어요', desc:'보이스피싱은 금감원·경찰·검찰을 사칭해요. 의심되면 전화를 끊고 공식 번호로 직접 전화하세요.' },
-  { emoji:'🏦', title:'금융 정보는 공식 앱에서만', desc:'은행·카드사 링크는 공식 앱 스토어에서 다운로드한 앱으로만 접근하세요. 검색 광고 링크도 위험할 수 있어요.' },
+  { emoji:'🔍', title:'URL을 꼼꼼히 확인하세요', desc:'정식 사이트와 철자 하나만 다른 도메인을 사용하는 게\n피싱의 전형적인 수법이에요.\n예) naver.com → naver-login.com' },
+  { emoji:'🔒', title:'자물쇠(HTTPS)만 믿지 마세요', desc:'HTTPS라도 피싱 사이트일 수 있어요.\n주소창의 도메인 이름 자체가\n올바른지 반드시 직접 확인하세요.' },
+  { emoji:'📲', title:'문자·카톡 링크는 특히 주의하세요', desc:'금융기관·공공기관은 문자로\n로그인 링크를 절대 보내지 않아요.\n의심스러우면 공식 앱으로 직접 접속하세요.' },
+  { emoji:'🎁', title:'"당첨됐어요!"는 99% 피싱이에요', desc:'이벤트 당첨, 택배 미수령 등의 문자는\n피싱의 대표적인 사례예요.\n링크를 클릭하기 전 반드시 출처를 확인하세요.' },
+  { emoji:'🧠', title:'개인정보 입력 전 한 번 더 확인하세요', desc:'아이디·비밀번호·주민번호를 요구하면\n공식 사이트가 맞는지 먼저 확인하세요.\n정상 기관은 한 번에 모두 요구하지 않아요.' },
+  { emoji:'📞', title:'모르는 번호도 피싱일 수 있어요', desc:'보이스피싱은 금감원·경찰·검찰을 사칭해요.\n의심되면 즉시 전화를 끊고\n해당 기관의 공식 번호로 직접 전화하세요.' },
+  { emoji:'🏦', title:'금융 정보는 공식 앱에서만 입력하세요', desc:'은행·카드사는 공식 앱 스토어에서\n다운로드한 앱으로만 이용하세요.\n검색 광고 속 링크도 위험할 수 있어요.' },
 ];
 
 let tipIdx = 0;
