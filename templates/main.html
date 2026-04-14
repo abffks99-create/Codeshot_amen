@@ -96,8 +96,8 @@
 .info-feature-icon.green { background: #ECFDF3; }
 .info-feature-title { font-size: 15px; font-weight: 700; color: #101828; margin-bottom: 3px; }
 .info-feature-title.white { color: #fff; }
-.info-feature-desc { font-size: 13px; color: #667085; line-height: 1.6; }
-.info-feature-desc.white { color: #98A2B3; }
+.info-feature-desc { font-size: 13px; color: #667085; line-height: 1.6; white-space: nowrap; }
+.info-feature-desc.white { color: #98A2B3; white-space: nowrap; }
 .visual-box { width: 240px; height: 240px; border-radius: 24px; background: linear-gradient(135deg, #EFF8FF, #DBEAFE); display: flex; align-items: center; justify-content: center; font-size: 96px; box-shadow: 0 8px 32px rgba(46,144,250,0.15); }
 .visual-box.dark { background: linear-gradient(135deg, #1D2939, #0D2137); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 .visual-box.red { background: linear-gradient(135deg, #FEF3F2, #FFE4E2); box-shadow: 0 8px 32px rgba(240,68,56,0.15); }
@@ -107,7 +107,7 @@
 .step-card { background: #fff; border: 1px solid #EAECF0; border-radius: 16px; padding: 28px 24px; text-align: center; }
 .step-num { width: 48px; height: 48px; border-radius: 50%; background: #2E90FA; color: #fff; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
 .step-title { font-size: 16px; font-weight: 700; color: #101828; margin-bottom: 8px; }
-.step-desc { font-size: 13px; color: #667085; line-height: 1.6; }
+.step-desc { font-size: 13px; color: #667085; line-height: 1.7; word-break: keep-all; word-wrap: break-word; white-space: normal; }
 @media (max-width: 768px) {
   .info-row, .info-row.reverse { flex-direction: column; }
   .step-grid { grid-template-columns: 1fr; }
@@ -146,7 +146,14 @@
       </div>
     </div>
     <div class="info-visual">
-      <div class="visual-box">🛡</div>
+      <div style="display:flex;align-items:center;justify-content:center;width:240px;height:240px;">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:180px;height:180px;">
+          <rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/>
+          <rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3"/>
+          <line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+          <path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
   </div>
 </div>
@@ -196,17 +203,17 @@
     <div class="step-card">
       <div class="step-num">1</div>
       <div class="step-title">URL 또는 이미지 입력</div>
-      <div class="step-desc">의심스러운 링크를 붙여넣거나, 스크린샷 이미지를 업로드하세요.</div>
+      <div class="step-desc">의심스러운 링크를 붙여넣거나,<br>스크린샷 이미지를 업로드하세요.</div>
     </div>
     <div class="step-card">
       <div class="step-num">2</div>
       <div class="step-title">AI 자동 분석</div>
-      <div class="step-desc">Gemini AI가 피싱 패턴, URL 이상 여부, 의심 문구를 자동으로 분석합니다.</div>
+      <div class="step-desc">Gemini AI가 피싱 패턴, URL 이상 여부,<br>의심 문구를 자동으로 분석합니다.</div>
     </div>
     <div class="step-card">
       <div class="step-num">3</div>
       <div class="step-title">결과 확인</div>
-      <div class="step-desc">고위험 / 중위험 / 저위험 / 안전 등급으로 결과를 확인하고 대응하세요.</div>
+      <div class="step-desc">고위험 / 중위험 / 저위험 / 안전 등급으로<br>결과를 확인하고 대응하세요.</div>
     </div>
   </div>
 </div>
