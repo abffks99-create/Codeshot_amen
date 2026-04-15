@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#2E90FA">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>CodeShot — 마이페이지</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -15,11 +15,14 @@
   </a>
   <div class="nav-links">
     <a href="/main">홈</a>
-    <a href="/upload">이미지 분석</a><a href="/crawl">URL 분석</a>
-    <a href="/alerts">알림</a><a href="/mypage">{{ session['user_name'] }}</a>
+    <a href="/upload">이미지 분석</a>
+    <a href="/crawl">URL 분석</a>
+    <a href="/alerts">알림</a>
+    <a href="/mypage">{{ session['user_name'] }}</a>
     <a href="/logout" class="btn-logout">로그아웃</a>
   </div>
 </nav>
+
 <div class="container">
   {% if error %}<div class="msg-error">⚠ {{ error }}</div>{% endif %}
   {% if success %}<div class="msg-success">✓ {{ success }}</div>{% endif %}
@@ -62,33 +65,44 @@
     </form>
   </div>
 
-  <div style="display:flex;gap:10px;margin-bottom:40px;">
-    <a href="/logout" class="btn btn-secondary" style="flex:1;">로그아웃</a>
-    <form method="POST" action="/withdraw" style="flex:1;" onsubmit="return confirm('정말 탈퇴하시겠어요?')">
+  <!-- 모바일 대응: flex-direction column으로 전환 -->
+  <div style="display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap;" class="mypage-action-row">
+    <a href="/logout" class="btn btn-secondary" style="flex:1;min-width:140px;">로그아웃</a>
+    <form method="POST" action="/withdraw" style="flex:1;min-width:140px;" onsubmit="return confirm('정말 탈퇴하시겠어요?')">
       <button type="submit" class="btn btn-danger" style="width:100%;">회원 탈퇴</button>
     </form>
   </div>
 </div>
+
+<nav class="mobile-bottom-nav">
+  <a href="/main"><span>🏠</span>홈</a>
+  <a href="/upload"><span>🖼</span>이미지</a>
+  <a href="/crawl"><span>🔗</span>URL</a>
+  <a href="/alerts"><span>🔔</span>알림</a>
+  <a href="/mypage"><span>👤</span>내정보</a>
+</nav>
+
 <script>
-function checkPw(){const p1=document.getElementById('new_pw').value,p2=document.getElementById('new_pw2').value;if(p1!==p2){alert('새 비밀번호가 일치하지 않습니다.');return false;}return true;}
-document.getElementById('new_pw2').addEventListener('input',function(){const msg=document.getElementById('pw-msg2'),p1=document.getElementById('new_pw').value;if(this.value&&this.value===p1){msg.textContent='✓ 일치합니다';msg.style.color='#12B76A';}else if(this.value){msg.textContent='✗ 일치하지 않습니다';msg.style.color='#F04438';}else msg.textContent='';});
+function checkPw(){
+  var p1=document.getElementById('new_pw').value,
+      p2=document.getElementById('new_pw2').value;
+  if(p1!==p2){alert('새 비밀번호가 일치하지 않습니다.');return false;}
+  return true;
+}
+document.getElementById('new_pw2').addEventListener('input',function(){
+  var msg=document.getElementById('pw-msg2'),
+      p1=document.getElementById('new_pw').value;
+  if(this.value&&this.value===p1){msg.textContent='✓ 일치합니다';msg.style.color='#12B76A';}
+  else if(this.value){msg.textContent='✗ 일치하지 않습니다';msg.style.color='#F04438';}
+  else msg.textContent='';
+});
+// 하단 네비 active
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    if(a.getAttribute('href')===path){a.classList.add('active');}
+  });
+})();
 </script>
-  <nav class="mobile-bottom-nav">
-    <a href="/main">
-      <span>🏠</span>홈
-    </a>
-    <a href="/upload">
-      <span>🖼</span>이미지
-    </a>
-    <a href="/crawl">
-      <span>🔗</span>URL
-    </a>
-    <a href="/alerts">
-      <span>🔔</span>알림
-    </a>
-    <a href="/mypage">
-      <span>👤</span>내정보
-    </a>
-  </nav>
 </body>
 </html>
