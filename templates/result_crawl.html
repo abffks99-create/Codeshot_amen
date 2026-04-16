@@ -66,7 +66,7 @@
       background: #fff;
       border-radius: 20px;
       padding: 28px 24px;
-      width: 100%; max-width: 380px;
+      width: 100%; max-width: 440px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
     .link-modal-icon { font-size: 36px; margin-bottom: 12px; }
@@ -76,7 +76,7 @@
       background: #F9FAFB; padding: 10px 12px; border-radius: 8px;
       margin-bottom: 16px; line-height: 1.5;
     }
-    .link-modal-warn { font-size: 13px; color: #B42318; font-weight: 500; margin-bottom: 20px; line-height: 1.6; }
+    .link-modal-warn { font-size: 13px; color: #B42318; font-weight: 500; margin-bottom: 20px; line-height: 1.6; word-break: keep-all; word-wrap: break-word; }
     .link-modal-btns { display: flex; gap: 10px; }
   </style>
 </head>
@@ -103,7 +103,7 @@
     <div class="link-modal-title">외부 링크로 이동</div>
     <div class="link-modal-url">{{ result.cr_url }}</div>
     {% if '고위험' in level %}
-    <div class="link-modal-warn">⚠ 이 URL은 고위험으로 판정되었습니다. 접속 시 개인정보 탈취, 악성코드 감염 등의 위험이 있습니다. 정말 접속하시겠습니까?</div>
+    <div class="link-modal-warn">⚠ 고위험 URL입니다. 접속 시 개인정보 탈취·악성코드 감염 위험이 있습니다. 그래도 접속하시겠습니까?</div>
     {% elif '중위험' in level %}
     <div class="link-modal-warn">이 URL은 중위험으로 판정되었습니다. 신중하게 판단 후 접속하세요.</div>
     {% else %}
@@ -115,7 +115,7 @@
          class="btn {% if '고위험' in level %}btn-danger{% else %}btn-primary{% endif %} btn-sm"
          style="flex:1;display:flex;align-items:center;justify-content:center;"
          onclick="closeModal()">
-        {% if '고위험' in level %}그래도 접속{% else %}접속하기{% endif %}
+        {% if '고위험' in level %}위험 감수하고 접속{% else %}사이트 접속{% endif %}
       </a>
     </div>
   </div>
@@ -159,11 +159,11 @@
         <!-- 접속 버튼 (경고 모달 먼저) -->
         {% if '고위험' in level %}
         <button class="url-warning-btn" onclick="openModal()">
-          ⛔ 위험 — 그래도 접속
+          ⛔ 위험 — 접속 주의
         </button>
         {% else %}
         <button class="url-open-btn" onclick="openModal()">
-          🔗 해당 사이트 방문
+          🔗 해당 사이트 접속
         </button>
         {% endif %}
       </div>
@@ -173,36 +173,86 @@
 
   <!-- AI 분석 결과 카드 -->
   <div class="card">
-    <div class="section-title">항목별 분석 결과</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+      <div class="section-title" style="margin-bottom:0;">항목별 분석 결과</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#667085;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#F04438;display:inline-block;"></span>위험
+        </span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#667085;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>주의
+        </span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#667085;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#12B76A;display:inline-block;"></span>안전
+        </span>
+      </div>
+    </div>
     {% set raw = result.total_analysis %}
     {% if raw and raw[:1] == '{' %}
       {% set parsed = raw | from_json %}
-      {% if parsed and parsed.items %}
-        {% for item in parsed.items %}
-        <div style="display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:14px;margin-bottom:12px;
-          {% if item.status == 'danger' %}background:#FEF3F2;border:1.5px solid #FECDCA;
-          {% elif item.status == 'warning' %}background:#FFFBEB;border:1.5px solid #FDE68A;
-          {% else %}background:#ECFDF3;border:1.5px solid #A9EFC5;{% endif %}">
-          <div style="font-size:28px;flex-shrink:0;margin-top:2px;">
-            {% if item.status == 'danger' %}❌{% elif item.status == 'warning' %}⚠️{% else %}✅{% endif %}
-          </div>
-          <div style="flex:1;">
-            <div style="font-weight:800;font-size:17px;margin-bottom:6px;
-              {% if item.status == 'danger' %}color:#B42318;
-              {% elif item.status == 'warning' %}color:#B45309;
-              {% else %}color:#027A48;{% endif %}">
-              {{ item.title }}
+      {% if parsed and parsed['items'] %}
+
+        <!-- 카테고리별 아이콘 (타이틀용) -->
+        {% set cat_icons = ['🚨', '🔗', '📊', '🛡️', '💬'] %}
+
+        {% for item in parsed['items'] %}
+        {% set i = loop.index0 %}
+        <div style="display:flex;gap:0;align-items:stretch;border-radius:14px;margin-bottom:10px;overflow:hidden;border:1.5px solid
+          {% if item.status == 'danger' %}#FECDCA{% elif item.status == 'warning' %}#FDE68A{% else %}#A9EFC5{% endif %};">
+
+          <!-- 왼쪽 사이드바: 컬러 도트 -->
+          <div style="width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+            {% if item.status == 'danger' %}background:#FEF3F2;
+            {% elif item.status == 'warning' %}background:#FFFBEB;
+            {% else %}background:#ECFDF3;{% endif %}">
+            <div style="width:12px;height:12px;border-radius:50%;
+              {% if item.status == 'danger' %}background:#F04438;
+              {% elif item.status == 'warning' %}background:#F59E0B;
+              {% else %}background:#12B76A;{% endif %}">
             </div>
-            <div style="font-size:15px;color:#344054;line-height:1.8;">{{ item.desc }}</div>
+          </div>
+
+          <!-- 오른쪽 텍스트 영역 -->
+          <div style="flex:1;padding:11px 14px;min-width:0;
+            {% if item.status == 'danger' %}background:#FFF8F8;
+            {% elif item.status == 'warning' %}background:#FFFEF5;
+            {% else %}background:#F6FFF9;{% endif %}">
+
+            <!-- 타이틀: 카테고리 이모지 + 텍스트 -->
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+              <span style="font-size:14px;line-height:1;">{{ cat_icons[i] if i < 5 else '🔍' }}</span>
+              <span style="font-size:13px;font-weight:700;
+                {% if item.status == 'danger' %}color:#B42318;
+                {% elif item.status == 'warning' %}color:#92400E;
+                {% else %}color:#027A48;{% endif %}">
+                {{ item.title }}
+              </span>
+            </div>
+
+            <!-- 설명: 구분선 + 뱃지 박스 -->
+            <div style="border-top:1px solid
+              {% if item.status == 'danger' %}#FECDCA{% elif item.status == 'warning' %}#FDE68A{% else %}#A9EFC5{% endif %};
+              padding-top:6px;">
+              <span style="display:inline-block;font-size:12px;color:
+                {% if item.status == 'danger' %}#7A271A{% elif item.status == 'warning' %}#78350F{% else %}#054F31{% endif %};
+                background:
+                {% if item.status == 'danger' %}#FEE4E2{% elif item.status == 'warning' %}#FEF3C7{% else %}#D1FAE5{% endif %};
+                border-radius:6px;padding:3px 8px;line-height:1.5;word-break:keep-all;">{{ item.desc }}</span>
+            </div>
           </div>
         </div>
         {% endfor %}
-        {% if parsed.summary %}
-        <div style="background:#F9FAFB;border:1px solid #EAECF0;border-radius:14px;padding:20px;margin-top:6px;">
-          <div style="font-size:13px;font-weight:700;color:#98A2B3;letter-spacing:0.06em;margin-bottom:10px;">💡 종합 의견</div>
-          <div style="font-size:15px;color:#344054;line-height:1.9;">{{ parsed.summary }}</div>
+
+        {% if parsed['summary'] %}
+        <div style="background:#F0F4FF;border:1.5px solid #C7D7FD;border-radius:14px;padding:12px 16px;margin-top:4px;display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:18px;flex-shrink:0;">💡</span>
+          <div style="min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:#3538CD;letter-spacing:0.06em;margin-bottom:3px;">종합 의견</div>
+            <div style="font-size:13px;color:#1D2939;line-height:1.75;word-break:keep-all;word-wrap:break-word;overflow-wrap:break-word;">{{ parsed['summary'] }}</div>
+          </div>
         </div>
         {% endif %}
+
       {% else %}
         <p style="font-size:15px;color:#344054;line-height:1.8;background:#F9FAFB;padding:16px;border-radius:10px;white-space:pre-wrap;">{{ raw }}</p>
       {% endif %}

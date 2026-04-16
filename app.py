@@ -29,12 +29,14 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'codeshot_fallback_key')
 app.jinja_env.filters['from_json'] = json.loads  # 템플릿에서 JSON 파싱용
 
-# ─── RAG 지식베이스 초기화 ──────────────────────────────────
-init_rag()
-
-# ─── OpenPhish 자동 업데이트 시작 (12시간마다) ───────────────
-if _has_updater:
-    start_background_updater()
+# ─── RAG 지식베이스 초기화 (reloader 중복 실행 방지) ──────────
+# debug=True 시 Flask가 프로세스를 2번 실행 → 모델 로딩도 2번 발생
+# WERKZEUG_RUN_MAIN 이 설정된 자식 프로세스에서만 실행
+import os as _os
+if _os.environ.get('WERKZEUG_RUN_MAIN') or not app.debug:
+    init_rag()
+    if _has_updater:
+        start_background_updater()
 
 # ─── DB 연결 ────────────────────────────────────────────────
 def get_db():
@@ -303,42 +305,61 @@ def upload():
             rag_context = build_rag_context(rag_result)
 
             uploaded_file = client.files.upload(file=Path(save_path))
-            image_prompt = f"""당신은 대한민국 최고의 피싱 이미지 분석 전문가입니다.
-금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{rag_context}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 분석 요청 사항 (반드시 아래 순서와 형식으로 답변)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-첨부된 이미지를 피싱 탐지 관점에서 분석하고,
-위의 RAG 참조 데이터(블랙리스트·사례집·패턴)를 반드시 참고하여
-참고한 사례가 있으면 명시하세요.
-
-1. 🚨 피싱 의심 요소
-   - 이미지에서 발견된 위장 브랜드, 로고, 문구, URL, 긴급 문구 등
-
-2. 🏦 사칭 대상 식별
-   - 어떤 기관/브랜드를 사칭하는지 (은행, 카카오, 네이버 등)
-
-3. 📊 RAG 기반 유사 사례 매칭
-   - 위의 참조 데이터 중 일치하거나 유사한 피싱 수법 명시
-   - 없으면 "유사 사례 없음 — 신종 수법 가능성"
-
-4. ⚠️ 위험도 판별
-   - 고위험 / 중위험 / 저위험 / 안전 중 하나만 명시
-   - 판단 근거를 구체적으로 설명
-
-5. 💡 종합 분석 및 사용자 행동 권고
-   - 이 이미지를 받은 사람이 취해야 할 행동
-   - AI 분석의 한계 명시 (100% 보장 불가)
-
-답변은 반드시 한국어로 작성하세요.
-"""
+            JSON_TEMPLATE = '''
+{
+  "level": "고위험 또는 중위험 또는 저위험 또는 안전 중 하나",
+  "items": [
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "피싱 의심 요소",
+      "desc": "핵심만 1문장으로. 예: '카카오페이 로고 위장 및 긴급 인증 요구 문구 발견.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "사칭 대상 식별",
+      "desc": "핵심만 1문장으로. 예: '카카오페이 및 KB국민은행 동시 사칭.' 없으면 '사칭 대상 없음.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "유사 사례 매칭",
+      "desc": "핵심만 1문장으로. 예: '금감원 2024 사례집의 카카오 계정 탈취 수법과 일치.' 없으면 '유사 사례 없음.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "위험도 판별",
+      "desc": "핵심만 1문장으로. 예: '복수 기관 사칭·긴급 문구·개인정보 요구 — 고위험 3중 패턴 탐지.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "사용자 행동 권고",
+      "desc": "핵심만 1문장으로. 예: '즉시 무시하고 공식 앱에서 직접 확인하세요.'"
+    }
+  ],
+  "summary": "전체 분석을 1~2문장으로 요약."
+}
+'''
+            image_prompt = (
+                "당신은 대한민국 최고의 피싱 이미지 분석 전문가입니다.\n"
+                "금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.\n\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                + rag_context +
+                "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "📋 분석 요청 사항\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "첨부된 이미지를 피싱 탐지 관점에서 분석하고,\n"
+                "RAG 참조 데이터를 반드시 참고하여 아래 JSON 형식으로만 답변하세요.\n"
+                "JSON 외 다른 텍스트는 절대 출력하지 마세요.\n\n"
+                "⚠️ 중요: 각 항목의 desc는 반드시 1문장(50자 이내)으로 핵심만 작성하세요.\n"
+                "길게 설명하지 말고 가장 중요한 사실 하나만 담으세요.\n"
+                + JSON_TEMPLATE +
+                "\nstatus 값 선택 기준:\n"
+                "- danger: 명확한 위협 요소 발견\n"
+                "- warning: 주의가 필요한 요소 발견\n"
+                "- safe: 이상 없음\n\n"
+                "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
+            )
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[image_prompt, uploaded_file]
@@ -414,12 +435,16 @@ def crawl():
         db.commit(); deep_idx = cur.lastrowid
 
         # ── RAG: 블랙리스트 즉시 체크 ──────────────────────────
+        print(f'[CRAWL] STEP1: 블랙리스트 체크 시작 url={url}')
         is_blacklisted = check_blacklist_exact(url)
+        print(f'[CRAWL] STEP2: 블랙리스트={is_blacklisted}')
 
         # ── RAG: 유사 사례·패턴 검색 ───────────────────────────
         rag_query = f"{url} {cols[0]} {cols[1]}"
+        print('[CRAWL] STEP3: RAG 검색 시작')
         rag_result = search_rag(rag_query, n_each=3)
         rag_context = build_rag_context(rag_result)
+        print(f'[CRAWL] STEP4: RAG 컨텍스트 생성 완료, 길이={len(rag_context)}')
 
         # ── RAG 강화 프롬프트 ───────────────────────────────────
         blacklist_warning = (
@@ -428,57 +453,77 @@ def crawl():
             if is_blacklisted else ""
         )
 
-        analysis_prompt = f"""당신은 대한민국 최고의 피싱 탐지 전문가입니다.
-금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.
+        JSON_TEMPLATE_CRAWL = '''
+{
+  "level": "고위험 또는 중위험 또는 저위험 또는 안전 중 하나",
+  "items": [
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "피싱 의심 문구 및 요소",
+      "desc": "핵심만 1문장으로. 예: 'KB국민은행 사칭 도메인(kb0nline.com) 및 긴급 보안 문구 발견.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "URL 이상 여부",
+      "desc": "핵심만 1문장으로. 예: '숫자 0을 알파벳 o로 위장한 도메인 패턴 — 전형적인 타이포스쿼팅 수법.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "유사 사례 매칭",
+      "desc": "핵심만 1문장으로. 예: 'KISA 블랙리스트의 KB국민은행 사칭 도메인 패턴과 일치.' 없으면 '유사 사례 없음.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "위험도 판별",
+      "desc": "핵심만 1문장으로. 예: '도메인 위장·신규 도메인·복수 기관 사칭 3가지 고위험 패턴 동시 탐지.'"
+    },
+    {
+      "status": "danger 또는 warning 또는 safe 중 하나",
+      "title": "사용자 행동 권고",
+      "desc": "핵심만 1문장으로. 예: '즉시 접속 중단 후 해당 금융사 공식 앱으로 직접 확인하세요.'"
+    }
+  ],
+  "summary": "전체 분석을 1~2문장으로 요약."
+}
+'''
+        analysis_prompt = (
+            "당신은 대한민국 최고의 피싱 탐지 전문가입니다.\n"
+            "금융감독원과 KISA의 최신 피싱 패턴 데이터베이스를 보유하고 있습니다.\n\n"
+            + blacklist_warning +
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            + rag_context +
+            "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🔍 분석 대상 URL 정보\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "URL: " + url + "\n"
+            "페이지 제목: " + cols[0] + "\n"
+            "본문 내용: " + cols[1] + "\n"
+            "링크 목록: " + cols[2] + "\n"
+            "이미지 목록: " + cols[3] + "\n"
+            "메타 정보: " + cols[4] + "\n"
+            "최종 이동 URL: " + cols[5] + "\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "📋 분석 요청 사항\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "위의 RAG 참조 데이터를 반드시 참고하여 분석하고,\n"
+            "아래 JSON 형식으로만 답변하세요. JSON 외 다른 텍스트는 절대 출력하지 마세요.\n\n"
+            "⚠️ 중요: 각 항목의 desc는 반드시 1문장(50자 이내)으로 핵심만 작성하세요.\n"
+            "길게 설명하지 말고 가장 중요한 사실 하나만 담으세요.\n"
+            + JSON_TEMPLATE_CRAWL +
+            "\nstatus 값 선택 기준:\n"
+            "- danger: 명확한 위협 요소 발견\n"
+            "- warning: 주의가 필요한 요소 발견\n"
+            "- safe: 이상 없음\n\n"
+            "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
+        )
 
-{blacklist_warning}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📚 RAG 참조 데이터 (금융감독원·KISA 공식 자료)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{rag_context}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔍 분석 대상 URL 정보
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-URL: {url}
-페이지 제목: {cols[0]}
-본문 내용: {cols[1]}
-링크 목록: {cols[2]}
-이미지 목록: {cols[3]}
-메타 정보: {cols[4]}
-최종 이동 URL: {cols[5]}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 분석 요청 사항 (반드시 아래 순서와 형식으로 답변)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-위의 RAG 참조 데이터(블랙리스트·사례집·패턴)를 반드시 참고하여 분석하고,
-참고한 사례가 있으면 "○○ 사례와 유사합니다" 형태로 명시하세요.
-
-1. 🚨 피싱 의심 문구 및 요소
-   - 발견된 의심 문구, 도메인 이상, 위장 수법 나열
-
-2. 🔗 URL 이상 여부
-   - 정상 / 의심 / 위험 중 선택 + 구체적 근거
-
-3. 📊 RAG 기반 유사 사례 매칭
-   - 위의 참조 데이터 중 일치하거나 유사한 피싱 수법 명시
-   - 없으면 "유사 사례 없음 — 신종 수법 가능성"
-
-4. ⚠️ 위험도 판별
-   - 고위험 / 중위험 / 저위험 / 안전 중 하나만 명시
-   - 판단 근거를 RAG 데이터와 연결하여 설명
-
-5. 💡 종합 분석 및 사용자 행동 권고
-   - 구체적인 대응 방법 안내
-   - AI 분석의 한계 명시 (100% 보장 불가)
-
-답변은 반드시 한국어로 작성하세요.
-"""
-
+        print('[CRAWL] STEP5: Gemini API 호출 시작')
         try:
             response = client.models.generate_content(model="gemini-2.5-flash", contents=analysis_prompt)
             raw = response.text.strip()
+            print(f'[CRAWL] STEP6: Gemini 응답 수신, 길이={len(raw)}')
 
             # ── JSON 파싱 (강화된 버전) ───────────────────────
             def safe_parse_json(text):

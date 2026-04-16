@@ -53,7 +53,7 @@
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
-  <div class="apple-timer" id="timer-text">약 30초 남음</div>
+  <div class="apple-timer" id="timer-text">약 15초 남음</div>
   <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
   <div style="font-size:13px;color:#98A2B3;font-weight:600;">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
@@ -161,7 +161,7 @@ document.addEventListener('paste', e => {
 });
 
 // Apple 로딩 애니메이션
-const TOTAL = 35; // 예상 소요 시간(초)
+const TOTAL = 15; // 예상 소요 시간(초)
 const steps = [
   { at: 0,  text: '이미지를 업로드하는 중...' },
   { at: 20, text: 'AI가 이미지를 분석하는 중...' },
