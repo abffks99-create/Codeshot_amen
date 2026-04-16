@@ -112,7 +112,7 @@ function renderCr(i, reset) {
     d.onclick = () => { crIdx=j; renderCr(j, true); };
     dots.appendChild(d);
   });
-  if (reset) { clearInterval(crTimer); crTimer = setInterval(() => { crIdx=(crIdx+1)%CR_TIPS.length; renderCr(crIdx); }, 6000); }
+  if (reset) { clearInterval(crTimer); crTimer = setInterval(() => { crIdx=(crIdx+1)%CR_TIPS.length; renderCr(crIdx); }, 3000); }
 }
 renderCr(0, true);
 
@@ -172,7 +172,7 @@ document.getElementById('crawl-form').addEventListener('submit', function(e) {
   tipInterval = setInterval(() => {
     tipIdx = (tipIdx + 1) % TIPS.length;
     renderTip(tipIdx);
-  }, 5000);
+  }, 3000);
 
   let elapsed = 0;
   const bar   = document.getElementById('bar-fill');

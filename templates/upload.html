@@ -116,7 +116,7 @@ function renderUp(i, reset) {
     d.onclick = () => { upIdx=j; renderUp(j, true); };
     dots.appendChild(d);
   });
-  if (reset) { clearInterval(upTimer); upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUp(upIdx); }, 6000); }
+  if (reset) { clearInterval(upTimer); upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUp(upIdx); }, 3000); }
 }
 renderUp(0, true);
 
@@ -211,7 +211,7 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
   setInterval(() => {
     tipIdx = (tipIdx + 1) % TIPS.length;
     renderTip(tipIdx);
-  }, 5000);
+  }, 3000);
 
   let elapsed = 0;
   const bar   = document.getElementById('bar-fill');
