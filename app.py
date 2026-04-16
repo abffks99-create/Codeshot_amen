@@ -308,7 +308,16 @@ def upload():
             rag_result = search_rag(f"이미지 피싱 스크린샷 {file.filename}", n_each=2)
             rag_context = build_rag_context(rag_result)
 
-            uploaded_file = client.files.upload(file=Path(save_path))
+            # ── 이미지를 base64로 인코딩하여 직접 전송 (files.upload 불안정 대체) ──
+            import base64 as _b64
+            with open(save_path, 'rb') as _f:
+                img_bytes = _f.read()
+            img_b64 = _b64.b64encode(img_bytes).decode('utf-8')
+            mime_map = {'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png',
+                        'gif':'image/gif','webp':'image/webp','bmp':'image/bmp',
+                        'tiff':'image/tiff','tif':'image/tiff','heic':'image/heic',
+                        'heif':'image/heif','svg':'image/svg+xml','ico':'image/x-icon'}
+            img_mime = mime_map.get(ext, 'image/jpeg')
             JSON_TEMPLATE = '''
 {
   "level": "고위험 또는 중위험 또는 저위험 또는 안전 중 하나",
@@ -374,10 +383,31 @@ def upload():
                 "- safe: 이상 없음\n\n"
                 "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
             )
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[image_prompt, uploaded_file]
-            )
+            from google.genai import types as _gtypes
+            import time as _time
+            # 모델 폴백 순서: 2.5-flash → 1.5-flash
+            _models = ['gemini-2.5-flash', 'gemini-1.5-flash']
+            response = None
+            for _model in _models:
+                for _attempt in range(2):  # 모델당 2회 재시도
+                    try:
+                        response = client.models.generate_content(
+                            model=_model,
+                            contents=[
+                                _gtypes.Part.from_text(text=image_prompt),
+                                _gtypes.Part.from_bytes(data=img_bytes, mime_type=img_mime),
+                            ]
+                        )
+                        print(f'[UPLOAD] 모델 {_model} 성공 (시도 {_attempt+1})')
+                        break
+                    except Exception as _e:
+                        print(f'[UPLOAD] {_model} 시도 {_attempt+1} 실패: {_e}')
+                        if _attempt == 0:
+                            _time.sleep(2)  # 재시도 전 2초 대기
+                if response:
+                    break
+            if not response:
+                raise Exception('모든 모델 호출 실패')
             raw = response.text.strip()
 
             # ── JSON 파싱 (강화된 버전) ───────────────────────
@@ -401,6 +431,8 @@ def upload():
 
             deep_model = 'gemini-2.5-flash (RAG 강화)'
         except Exception as e:
+            import traceback; traceback.print_exc()
+            print(f'[UPLOAD ERROR] {type(e).__name__}: {e}')
             result = friendly_ai_error(e); deep_model = 'Gemini (Error)'
 
         cur.execute("INSERT INTO tb_deep_upload (upload_idx,deep_model,deep_result) VALUES (%s,%s,%s)",
@@ -545,7 +577,23 @@ def crawl():
 
         print('[CRAWL] STEP5: Gemini API 호출 시작')
         try:
-            response = client.models.generate_content(model="gemini-2.5-flash", contents=analysis_prompt)
+            import time as _time2
+            _models2 = ['gemini-2.5-flash', 'gemini-1.5-flash']
+            response = None
+            for _model2 in _models2:
+                for _attempt2 in range(2):
+                    try:
+                        response = client.models.generate_content(model=_model2, contents=analysis_prompt)
+                        print(f'[CRAWL] 모델 {_model2} 성공 (시도 {_attempt2+1})')
+                        break
+                    except Exception as _e2:
+                        print(f'[CRAWL] {_model2} 시도 {_attempt2+1} 실패: {_e2}')
+                        if _attempt2 == 0:
+                            _time2.sleep(2)
+                if response:
+                    break
+            if not response:
+                raise Exception('모든 모델 호출 실패')
             raw = response.text.strip()
             print(f'[CRAWL] STEP6: Gemini 응답 수신, 길이={len(raw)}')
 
