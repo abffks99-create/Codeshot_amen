@@ -244,11 +244,17 @@
         {% endfor %}
 
         {% if parsed['summary'] %}
-        <div style="background:#F0F4FF;border:1.5px solid #C7D7FD;border-radius:14px;padding:12px 16px;margin-top:4px;display:flex;gap:10px;align-items:flex-start;">
-          <span style="font-size:18px;flex-shrink:0;">💡</span>
-          <div style="min-width:0;">
-            <div style="font-size:11px;font-weight:700;color:#3538CD;letter-spacing:0.06em;margin-bottom:3px;">종합 의견</div>
-            <div style="font-size:13px;color:#1D2939;line-height:1.75;word-break:keep-all;word-wrap:break-word;overflow-wrap:break-word;">{{ parsed['summary'] }}</div>
+        <!-- 종합 의견 — 구분선으로 연장선 표현 + 강조 텍스트 -->
+        <div style="margin-top:6px;border-top:2px solid #C7D7FD;padding-top:12px;">
+          <div style="background:#fff;border:1.5px solid #E4E7EC;border-left:4px solid #344054;border-radius:12px;padding:16px 18px;">
+            <!-- 헤더 -->
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">
+              <span style="font-size:16px;">💡</span>
+              <span style="font-size:12px;font-weight:800;color:#344054;letter-spacing:0.08em;">종합 의견</span>
+              <div style="flex:1;height:1px;background:#E4E7EC;margin-left:4px;"></div>
+            </div>
+            <!-- 본문 -->
+            <div style="font-size:14px;font-weight:600;color:#101828;line-height:2.0;word-break:keep-all;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-line;">{{ parsed['summary'] }}</div>
           </div>
         </div>
         {% endif %}

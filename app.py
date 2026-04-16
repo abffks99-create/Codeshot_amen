@@ -287,16 +287,20 @@ def upload():
             return render_template('upload.html', error='파일을 선택해주세요.')
         if not allowed_file(file.filename):
             return render_template('upload.html', error='지원하지 않는 파일 형식입니다.')
+        import uuid as _uuid
         ext = file.filename.rsplit('.',1)[-1].lower()
+        # 한글/특수문자 파일명 → UUID로 안전하게 변환
+        original_name = file.filename
+        safe_filename = f"{_uuid.uuid4().hex}.{ext}"
         save_dir = os.path.join('static','uploads')
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, file.filename)
+        save_path = os.path.join(save_dir, safe_filename)
         file.save(save_path)
         file_size = f"{os.path.getsize(save_path)} bytes"
 
         db = get_db(); cur = db.cursor()
         cur.execute("INSERT INTO tb_upload (id,file_name,file_size,file_ext) VALUES (%s,%s,%s,%s)",
-                    (session['user_id'], file.filename, file_size, ext))
+                    (session['user_id'], safe_filename, file_size, ext))
         db.commit(); upload_idx = cur.lastrowid
 
         try:
@@ -335,7 +339,7 @@ def upload():
       "desc": "핵심만 1문장으로. 예: '즉시 무시하고 공식 앱에서 직접 확인하세요.'"
     }
   ],
-  "summary": "전체 분석을 1~2문장으로 요약."
+  "summary": "위의 5가지 항목을 종합하여 4~5문장으로 작성하세요. 각 문장은 반드시 줄바꿈(\\n)으로 구분하세요. 이 URL/이미지가 왜 위험한지(또는 안전한지), 어떤 수법이 사용됐는지, 사용자가 지금 당장 해야 할 행동을 쉬운 말로 구체적으로 설명하세요. 예시: \"이 주소는 진짜처럼 보이지만 가짜예요.\\n주소에 글자 하나가 다릅니다.\\n즉시 창을 닫으세요.\""
 }
 '''
             image_prompt = (
@@ -493,7 +497,7 @@ def crawl():
       "desc": "핵심만 1문장으로. 예: '즉시 접속 중단 후 해당 금융사 공식 앱으로 직접 확인하세요.'"
     }
   ],
-  "summary": "전체 분석을 1~2문장으로 요약."
+  "summary": "위의 5가지 항목을 종합하여 4~5문장으로 작성하세요. 각 문장은 반드시 줄바꿈(\\n)으로 구분하세요. 이 URL/이미지가 왜 위험한지(또는 안전한지), 어떤 수법이 사용됐는지, 사용자가 지금 당장 해야 할 행동을 쉬운 말로 구체적으로 설명하세요. 예시: \"이 주소는 진짜처럼 보이지만 가짜예요.\\n주소에 글자 하나가 다릅니다.\\n즉시 창을 닫으세요.\""
 }
 '''
         analysis_prompt = (
