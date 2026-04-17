@@ -258,6 +258,10 @@ def delete_upload(upload_idx):
     try: page = int(request.form.get('page', 1))
     except: page = 1
     db = get_db(); cur = db.cursor()
+    # 관련 알림 삭제 (deep_idx 기준)
+    cur.execute("""DELETE a FROM tb_alert a
+        INNER JOIN tb_deep_upload du ON a.deep_idx = du.deep_idx
+        WHERE du.upload_idx=%s AND a.id=%s""", (upload_idx, session['user_id']))
     # 자식 테이블(tb_deep_upload) 먼저 삭제 후 부모(tb_upload) 삭제
     cur.execute("DELETE FROM tb_deep_upload WHERE upload_idx=%s", (upload_idx,))
     cur.execute("DELETE FROM tb_upload WHERE upload_idx=%s AND id=%s", (upload_idx, session['user_id']))
@@ -271,11 +275,69 @@ def delete_crawl(cr_idx):
     try: page = int(request.form.get('page', 1))
     except: page = 1
     db = get_db(); cur = db.cursor()
+    # 관련 알림 삭제 (deep_idx 기준)
+    cur.execute("""DELETE a FROM tb_alert a
+        INNER JOIN tb_deep_crawling dc ON a.deep_idx = dc.deep_idx
+        WHERE dc.crawling_idx=%s AND a.id=%s""", (cr_idx, session['user_id']))
     # 자식 테이블(tb_deep_crawling) 먼저 삭제 후 부모(tb_crawling) 삭제
     cur.execute("DELETE FROM tb_deep_crawling WHERE crawling_idx=%s", (cr_idx,))
     cur.execute("DELETE FROM tb_crawling WHERE cr_idx=%s AND id=%s", (cr_idx, session['user_id']))
     db.commit(); cur.close(); db.close()
     return redirect(url_for('history', tab=tab, page=page))
+
+# ─── 분석 내역 선택 삭제 ────────────────────────────────────
+@app.route('/delete/selected_records', methods=['POST'])
+def delete_selected_records():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    uid = session['user_id']
+    tab  = request.form.get('tab', 'all')
+    try: page = int(request.form.get('page', 1))
+    except: page = 1
+
+    selected = request.form.getlist('selected')  # ["crawl_1", "upload_3", ...]
+    if not selected:
+        return redirect(url_for('history', tab=tab, page=page))
+
+    db = get_db()
+    db.autocommit = False
+    cur = db.cursor()
+    try:
+        for item in selected:
+            kind, idx = item.split('_', 1)
+            idx = int(idx)
+            if kind == 'upload':
+                cur.execute("""DELETE a FROM tb_alert a
+                    INNER JOIN tb_deep_upload du ON a.deep_idx = du.deep_idx
+                    WHERE du.upload_idx=%s AND a.id=%s""", (idx, uid))
+                cur.execute("DELETE FROM tb_deep_upload WHERE upload_idx=%s", (idx,))
+                cur.execute("DELETE FROM tb_upload WHERE upload_idx=%s AND id=%s", (idx, uid))
+            elif kind == 'crawl':
+                cur.execute("""DELETE a FROM tb_alert a
+                    INNER JOIN tb_deep_crawling dc ON a.deep_idx = dc.deep_idx
+                    WHERE dc.crawling_idx=%s AND a.id=%s""", (idx, uid))
+                cur.execute("DELETE FROM tb_deep_crawling WHERE crawling_idx=%s", (idx,))
+                cur.execute("DELETE FROM tb_crawling WHERE cr_idx=%s AND id=%s", (idx, uid))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[선택삭제 오류] {e}")
+    finally:
+        cur.close()
+        db.close()
+    return redirect(url_for('history', tab=tab, page=page))
+
+# ─── 알림 선택 삭제 ─────────────────────────────────────────
+@app.route('/alerts/delete_selected', methods=['POST'])
+def delete_selected_alerts():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    selected = request.form.getlist('selected')  # alert_idx 목록
+    if selected:
+        db = get_db(); cur = db.cursor()
+        fmt = ','.join(['%s'] * len(selected))
+        cur.execute(f"DELETE FROM tb_alert WHERE alert_idx IN ({fmt}) AND id=%s",
+                    (*selected, session['user_id']))
+        db.commit(); cur.close(); db.close()
+    return redirect(url_for('alerts'))
 
 # ─── UC-102 : 이미지 업로드 및 분석 ─────────────────────────
 @app.route('/upload', methods=['GET','POST'])
@@ -648,7 +710,7 @@ def result_upload(deep_idx):
         FROM tb_deep_upload d JOIN tb_upload u ON d.upload_idx=u.upload_idx
         WHERE d.deep_idx=%s AND u.id=%s""", (deep_idx, session['user_id']))
     result = cur.fetchone(); cur.close(); db.close()
-    if not result: return redirect(url_for('main'))
+    if not result: return redirect(url_for('alerts'))
     return render_template('result_upload.html', result=result)
 
 @app.route('/result/crawl/<int:deep_idx>')
@@ -659,7 +721,7 @@ def result_crawl(deep_idx):
         FROM tb_deep_crawling d JOIN tb_crawling c ON d.crawling_idx=c.cr_idx
         WHERE d.deep_idx=%s AND c.id=%s""", (deep_idx, session['user_id']))
     result = cur.fetchone(); cur.close(); db.close()
-    if not result: return redirect(url_for('main'))
+    if not result: return redirect(url_for('alerts'))
     return render_template('result_crawl.html', result=result)
 
 
@@ -685,6 +747,7 @@ def delete_all_records():
         """, (uid,))
         cur.execute("DELETE FROM tb_crawling WHERE id=%s", (uid,))
         cur.execute("DELETE FROM tb_upload WHERE id=%s", (uid,))
+        cur.execute("DELETE FROM tb_alert WHERE id=%s", (uid,))
         db.commit()
         print(f"[전체삭제] 완료 - user: {uid}")
     except Exception as e:

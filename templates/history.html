@@ -147,8 +147,17 @@
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:12px;color:#98A2B3;">{{ page }} / {{ total_pages }} 페이지</span>
         {% if records %}
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleSelectMode()">선택</button>
+        <form id="selected-delete-form" method="POST" action="/delete/selected_records" style="display:none;"
+              onsubmit="return confirmSelectedDelete()">
+          <input type="hidden" name="tab" value="{{ tab }}">
+          <input type="hidden" name="page" value="{{ page }}">
+          <div id="selected-hidden-inputs"></div>
+          <button type="submit" class="btn btn-danger btn-sm">선택 삭제</button>
+        </form>
+        <button id="select-cancel-btn" class="btn btn-secondary btn-sm" style="display:none;" onclick="toggleSelectMode()">취소</button>
         <form method="POST" action="/delete/all_records"
-              onsubmit="return confirm('분석 내역을 전체 삭제할까요?')">
+              onsubmit="return confirm('분석 내역을 전체 삭제할까요? 모든 알림도 함께 삭제됩니다.')">
           <button type="submit" class="btn btn-danger btn-sm">전체 삭제</button>
         </form>
         {% endif %}
@@ -160,10 +169,15 @@
       {% set dest = '/result/crawl/' ~ r.analysis_id if r.type == 'crawling' else '/result/upload/' ~ r.analysis_id %}
       {% set del_action = '/delete/crawl/' ~ r.record_id if r.type == 'crawling' else '/delete/upload/' ~ r.record_id %}
       {% set level = r.ciritical_level|string if r.ciritical_level else '' %}
+      {% set item_key = ('crawl_' ~ r.record_id) if r.type == 'crawling' else ('upload_' ~ r.record_id) %}
 
       <div style="border-bottom:1px solid #F3F4F8;">
         <!-- 메인 행 -->
         <div style="display:flex;align-items:center;gap:14px;padding:14px 0;">
+          <!-- 체크박스 (선택 모드일 때만 표시) -->
+          <input type="checkbox" class="record-checkbox" value="{{ item_key }}"
+                 style="display:none;width:18px;height:18px;cursor:pointer;flex-shrink:0;accent-color:#F04438;">
+
           <!-- 타입 아이콘 -->
           <div class="analysis-icon {% if r.type == 'crawling' %}crawl{% else %}upload{% endif %}"
                style="cursor:pointer;flex-shrink:0;"
@@ -194,15 +208,15 @@
           </div>
 
           <!-- 미리보기 토글 -->
-          <button class="toggle-btn"
+          <button class="toggle-btn preview-toggle-btn"
                   onclick="togglePreview('prev-{{ loop.index }}', 'arrow-{{ loop.index }}')"
                   title="미리보기">
             <span id="arrow-{{ loop.index }}">▾</span>
           </button>
 
           <!-- 삭제 -->
-          <form method="POST" action="{{ del_action }}"
-                onsubmit="return confirm('이 내역을 삭제할까요?')" style="flex-shrink:0;">
+          <form method="POST" action="{{ del_action }}" class="single-delete-form"
+                onsubmit="return confirm('이 내역을 삭제할까요? 관련 알림도 함께 삭제됩니다.')" style="flex-shrink:0;">
             <input type="hidden" name="tab" value="{{ tab }}">
             <input type="hidden" name="page" value="{{ page }}">
             <button type="submit" style="background:none;border:none;cursor:pointer;color:#FDA29B;font-size:16px;padding:4px 6px;">🗑</button>
@@ -275,6 +289,39 @@ function togglePreview(panelId, arrowId) {
   const isOpen = panel.style.display === 'block';
   panel.style.display = isOpen ? 'none' : 'block';
   arrow.textContent = isOpen ? '▾' : '▴';
+}
+
+let selectMode = false;
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  const checkboxes = document.querySelectorAll('.record-checkbox');
+  const deleteForm = document.getElementById('selected-delete-form');
+  const cancelBtn = document.getElementById('select-cancel-btn');
+  const singleForms = document.querySelectorAll('.single-delete-form');
+  const previewBtns = document.querySelectorAll('.preview-toggle-btn');
+
+  checkboxes.forEach(cb => {
+    cb.style.display = selectMode ? 'block' : 'none';
+    cb.checked = false;
+  });
+  deleteForm.style.display = selectMode ? 'inline-flex' : 'none';
+  cancelBtn.style.display = selectMode ? 'inline-flex' : 'none';
+  singleForms.forEach(f => f.style.display = selectMode ? 'none' : '');
+  previewBtns.forEach(b => b.style.display = selectMode ? 'none' : '');
+}
+
+function confirmSelectedDelete() {
+  const checked = document.querySelectorAll('.record-checkbox:checked');
+  if (checked.length === 0) { alert('삭제할 항목을 선택해주세요.'); return false; }
+  if (!confirm(`선택한 ${checked.length}개 항목을 삭제할까요? 관련 알림도 함께 삭제됩니다.`)) return false;
+  const container = document.getElementById('selected-hidden-inputs');
+  container.innerHTML = '';
+  checked.forEach(cb => {
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'selected'; input.value = cb.value;
+    container.appendChild(input);
+  });
+  return true;
 }
 </script>
 </body>

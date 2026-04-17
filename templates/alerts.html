@@ -27,6 +27,13 @@
         {% set unread = alerts|selectattr('received_yn','eq','N')|list|length %}
         {% if unread > 0 %}<span class="badge badge-blue">미확인 {{ unread }}</span>{% endif %}
         {% if alerts %}
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleAlertSelectMode()">선택</button>
+        <form id="alert-selected-form" method="POST" action="/alerts/delete_selected" style="display:none;"
+              onsubmit="return confirmAlertSelectedDelete()">
+          <div id="alert-selected-inputs"></div>
+          <button type="submit" class="btn btn-danger btn-sm">선택 삭제</button>
+        </form>
+        <button id="alert-cancel-btn" class="btn btn-secondary btn-sm" style="display:none;" onclick="toggleAlertSelectMode()">취소</button>
         <form method="POST" action="/alerts/read_all">
           <button type="submit" class="btn btn-outline btn-sm">전체 확인</button>
         </form>
@@ -40,6 +47,9 @@
     {% if alerts %}
       {% for a in alerts %}
       <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #F3F4F8;">
+        <!-- 체크박스 (선택 모드일 때만 표시) -->
+        <input type="checkbox" class="alert-checkbox" value="{{ a.alert_idx }}"
+               style="display:none;width:18px;height:18px;cursor:pointer;flex-shrink:0;margin-top:4px;accent-color:#F04438;">
         <div class="alert-dot {% if a.received_yn == 'Y' %}read{% endif %}" style="margin-top:5px;flex-shrink:0;"></div>
         <div class="alert-body" style="flex:1;cursor:pointer;"
              onclick="location.href='/alerts/read/{{ a.alert_idx }}'">
@@ -54,7 +64,7 @@
           </div>
         </div>
         <!-- 개별 삭제 -->
-        <form method="POST" action="/alerts/delete/{{ a.alert_idx }}"
+        <form class="alert-single-delete" method="POST" action="/alerts/delete/{{ a.alert_idx }}"
               onsubmit="return confirm('이 알림을 삭제할까요?')" style="flex-shrink:0;">
           <button type="submit" style="background:none;border:none;cursor:pointer;color:#FDA29B;font-size:16px;padding:4px 8px;" title="삭제">🗑</button>
         </form>
@@ -86,5 +96,38 @@
       <span>👤</span>내정보
     </a>
   </nav>
+
+<script>
+let alertSelectMode = false;
+function toggleAlertSelectMode() {
+  alertSelectMode = !alertSelectMode;
+  const checkboxes = document.querySelectorAll('.alert-checkbox');
+  const form = document.getElementById('alert-selected-form');
+  const cancelBtn = document.getElementById('alert-cancel-btn');
+  const singleForms = document.querySelectorAll('.alert-single-delete');
+
+  checkboxes.forEach(cb => {
+    cb.style.display = alertSelectMode ? 'block' : 'none';
+    cb.checked = false;
+  });
+  form.style.display = alertSelectMode ? 'inline-flex' : 'none';
+  cancelBtn.style.display = alertSelectMode ? 'inline-flex' : 'none';
+  singleForms.forEach(f => f.style.display = alertSelectMode ? 'none' : '');
+}
+
+function confirmAlertSelectedDelete() {
+  const checked = document.querySelectorAll('.alert-checkbox:checked');
+  if (checked.length === 0) { alert('삭제할 알림을 선택해주세요.'); return false; }
+  if (!confirm(`선택한 ${checked.length}개 알림을 삭제할까요?`)) return false;
+  const container = document.getElementById('alert-selected-inputs');
+  container.innerHTML = '';
+  checked.forEach(cb => {
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'selected'; input.value = cb.value;
+    container.appendChild(input);
+  });
+  return true;
+}
+</script>
 </body>
 </html>
