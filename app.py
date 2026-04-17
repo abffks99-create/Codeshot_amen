@@ -711,8 +711,9 @@ def read_alert(alert_idx):
     cur.execute("UPDATE tb_alert SET received_yn='Y',received_at=NOW() WHERE alert_idx=%s AND id=%s",
                 (alert_idx, session['user_id']))
     db.commit()
-    cur.execute("SELECT * FROM tb_alert WHERE alert_idx=%s", (alert_idx,))
+    cur.execute("SELECT * FROM tb_alert WHERE alert_idx=%s AND id=%s", (alert_idx, session['user_id']))
     alert = cur.fetchone(); cur.close(); db.close()
+    if not alert: return redirect(url_for('alerts'))
     if alert['alert_type'] == '업로드':
         return redirect(url_for('result_upload', deep_idx=alert['deep_idx']))
     return redirect(url_for('result_crawl', deep_idx=alert['deep_idx']))
