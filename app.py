@@ -107,7 +107,14 @@ def signup():
     error = None
     if request.method == 'POST':
         uid = request.form['id']; pwd = hash_pw(request.form['pwd'])
-        name = request.form['name']; email = request.form['email']; phone = request.form['phone']
+        name = request.form['name']; email = request.form['email']
+        _raw_phone = re.sub(r'[^0-9]', '', request.form['phone'])
+        if len(_raw_phone) == 11:
+            phone = f"{_raw_phone[:3]}-{_raw_phone[3:7]}-{_raw_phone[7:]}"
+        elif len(_raw_phone) == 10:
+            phone = f"{_raw_phone[:3]}-{_raw_phone[3:6]}-{_raw_phone[6:]}"
+        else:
+            phone = request.form['phone']
         db = get_db(); cur = db.cursor()
         try:
             cur.execute("INSERT INTO tb_user (id,pwd,name,email,phone,role) VALUES (%s,%s,%s,%s,%s,'user')",
@@ -815,7 +822,14 @@ def mypage():
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'update_info':
-            name = request.form['name']; email = request.form['email']; phone = request.form['phone']
+            name = request.form['name']; email = request.form['email']
+            _raw_phone = re.sub(r'[^0-9]', '', request.form['phone'])
+            if len(_raw_phone) == 11:
+                phone = f"{_raw_phone[:3]}-{_raw_phone[3:7]}-{_raw_phone[7:]}"
+            elif len(_raw_phone) == 10:
+                phone = f"{_raw_phone[:3]}-{_raw_phone[3:6]}-{_raw_phone[6:]}"
+            else:
+                phone = request.form['phone']
             try:
                 cur.execute("UPDATE tb_user SET name=%s,email=%s,phone=%s WHERE id=%s",
                             (name,email,phone,session['user_id']))
