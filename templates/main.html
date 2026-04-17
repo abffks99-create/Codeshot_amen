@@ -87,12 +87,12 @@
 
 <!-- ── 서비스 소개 섹션 ───────────────────────────────────── -->
 <style>
-.info-section { background: #fff; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; border: 1px solid #EAECF0; }
-.info-section-dark { background: #101828; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; }
+.info-section { background: #fff; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; border: 1px solid #EAECF0; overflow: hidden; }
+.info-section-dark { background: #101828; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; overflow: hidden; }
 .info-row { display: flex; align-items: center; gap: 60px; }
 .info-row.reverse { flex-direction: row-reverse; }
-.info-text { flex: 1; }
-.info-visual { flex: 1; display: flex; justify-content: center; align-items: center; }
+.info-text { flex: 1; min-width: 0; }
+.info-visual { flex: 0 0 auto; display: flex; justify-content: center; align-items: center; }
 .info-badge { display: inline-block; background: #EFF8FF; color: #2E90FA; font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px; margin-bottom: 16px; letter-spacing: 0.05em; }
 .info-badge.danger { background: #FEF3F2; color: #F04438; }
 .info-badge.success { background: #ECFDF3; color: #12B76A; }
@@ -110,7 +110,7 @@
 .info-feature-title.white { color: #fff; }
 .info-feature-desc { font-size: 13px; color: #667085; line-height: 1.6; word-break: keep-all; }
 .info-feature-desc.white { color: #98A2B3; word-break: keep-all; }
-.visual-box { width: 240px; height: 240px; border-radius: 24px; background: linear-gradient(135deg, #EFF8FF, #DBEAFE); display: flex; align-items: center; justify-content: center; font-size: 96px; box-shadow: 0 8px 32px rgba(46,144,250,0.15); }
+.visual-box { width: 200px; height: 200px; border-radius: 24px; background: linear-gradient(135deg, #EFF8FF, #DBEAFE); display: flex; align-items: center; justify-content: center; font-size: 72px; line-height: 1; box-shadow: 0 8px 32px rgba(46,144,250,0.15); overflow: hidden; flex-shrink: 0; }
 .visual-box.dark { background: linear-gradient(135deg, #1D2939, #0D2137); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 .visual-box.red { background: linear-gradient(135deg, #FEF3F2, #FFE4E2); box-shadow: 0 8px 32px rgba(240,68,56,0.15); }
 .section-title-center { text-align: center; font-size: 32px; font-weight: 800; color: #101828; letter-spacing: -0.04em; margin-bottom: 8px; }
@@ -189,13 +189,20 @@
           <div class="info-feature-icon" style="background:#1D2939;">📊</div>
           <div>
             <div class="info-feature-title white">분석 이력 관리</div>
-            <div class="info-feature-desc white">모든 분석 내역을 저장하고 언제든지 다시 확인할 수 있습니다.</div>
+            <div class="info-feature-desc white" style="white-space:nowrap;">모든 분석 내역을 저장하고 언제든지 다시 확인할 수 있습니다.</div>
           </div>
         </div>
       </div>
     </div>
     <div class="info-visual">
-      <div class="visual-box dark">🔍</div>
+      <div class="visual-box dark">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="42" cy="42" r="26" stroke="#60A5FA" stroke-width="7" fill="none"/>
+          <circle cx="42" cy="42" r="14" fill="#1D4ED8" opacity="0.5"/>
+          <circle cx="36" cy="35" r="5" fill="rgba(255,255,255,0.3)"/>
+          <line x1="61" y1="61" x2="82" y2="82" stroke="#A78BFA" stroke-width="8" stroke-linecap="round"/>
+        </svg>
+      </div>
     </div>
   </div>
 </div>
@@ -213,7 +220,7 @@
     <div class="step-card">
       <div class="step-num">2</div>
       <div class="step-title">AI 자동 분석</div>
-      <div class="step-desc">피싱 패턴·URL 이상 여부·의심 문구를 AI가 자동으로 분석합니다.</div>
+      <div class="step-desc">피싱 패턴·URL 이상 여부, 의심 문구를 AI가 자동으로 분석합니다.</div>
     </div>
     <div class="step-card">
       <div class="step-num">3</div>
