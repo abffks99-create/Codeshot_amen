@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS tb_upload (
 CREATE TABLE IF NOT EXISTS tb_deep_upload (
     deep_idx    INT      NOT NULL AUTO_INCREMENT,
     upload_idx  INT      NOT NULL,
-    deep_model  VARCHAR(50)  NOT NULL DEFAULT 'GPT-4o Vision',
+    deep_model  VARCHAR(50)  NOT NULL DEFAULT 'Gemini 2.5 Flash',
     deep_result TEXT     NOT NULL,
     created_at  DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (deep_idx),

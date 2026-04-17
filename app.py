@@ -502,7 +502,7 @@ def upload():
         except Exception as e:
             import traceback; traceback.print_exc()
             print(f'[UPLOAD ERROR] {type(e).__name__}: {e}')
-            result = friendly_ai_error(e); deep_model = 'Gemini (Error)'
+            result = friendly_ai_error(e); deep_model = 'Gemini 2.5 Flash (Error)'
 
         cur.execute("INSERT INTO tb_deep_upload (upload_idx,deep_model,deep_result) VALUES (%s,%s,%s)",
                     (upload_idx, deep_model, result))
