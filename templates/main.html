@@ -13,7 +13,111 @@
     .stat-card.total.active-tab { border-color: #2E90FA; }
     .stat-card.url.active-tab { border-color: #F59E0B; }
     .stat-card.img.active-tab { border-color: #12B76A; }
-  
+
+    /* ── OpenPhish 위협 섹션 ── */
+    .threat-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
+    .threat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .threat-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:#101828; }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:#F04438; flex-shrink:0; animation:livepulse 1.5s infinite; }
+    @keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .live-badge { font-size:11px; font-weight:700; color:#F04438; }
+    .today-count { font-size:12px; color:#667085; background:#F9FAFB; border:1px solid #EAECF0; border-radius:8px; padding:4px 10px; }
+    .threat-grid { display:flex; flex-direction:column; gap:8px; }
+    .tc { background:#F9FAFB; border:1px solid #EAECF0; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
+    .tc.high { border-left:4px solid #F04438; border-radius:0 10px 10px 0; }
+    .tc.med  { border-left:4px solid #F59E0B; border-radius:0 10px 10px 0; }
+    .tc-top { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .tc-badge { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; font-family:inherit; }
+    .tc-badge.high { background:#FEF3F2; color:#B42318; }
+    .tc-badge.med  { background:#FFFBEB; color:#92400E; }
+    .tc-time { font-size:13px; color:#98A2B3; flex-shrink:0; }
+    .tc-body { flex:1; min-width:0; }
+    .tc-domain { font-size:15px; font-weight:600; color:#101828; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:inherit; }
+    .tc-cat { font-size:13px; color:#667085; font-family:inherit; }
+    /* 위협 카드 슬라이드 */
+    .threat-slider-wrap { position:relative; }
+    .threat-slider-clip { overflow:hidden; }
+    .threat-slider { display:flex; flex-direction:column; gap:8px; transition:transform 0.4s cubic-bezier(.4,0,.2,1); }
+    .threat-slide-nav { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid #EAECF0; }
+    .slide-dots { display:flex; gap:6px; align-items:center; }
+    .slide-dot { width:6px; height:6px; border-radius:50%; background:#EAECF0; cursor:pointer; transition:all 0.2s; }
+    .slide-dot.on { background:#F04438; width:16px; border-radius:3px; }
+    .slide-arrows { display:flex; gap:6px; }
+    .slide-arr { width:28px; height:28px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; color:#667085; }
+    .slide-arr:hover { background:#EAECF0; }
+    .slide-arr:disabled { opacity:0.35; cursor:default; }
+    .slide-info { font-size:11px; color:#98A2B3; }
+    /* 전체보기 확장 영역 */
+    .threats-more-btn { font-size:12px; font-weight:500; color:#B42318; background:#FEF3F2; border:1px solid #FECDCA; border-radius:8px; padding:5px 12px; cursor:pointer; white-space:nowrap; font-family:inherit; }
+    .threats-expand { display:none; margin-top:14px; border-top:1px solid #EAECF0; padding-top:14px; }
+    .threat-slider-wrap { position:relative; }
+    .expand-filter-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: #F9FAFB;
+      border: 1px solid #EAECF0;
+      border-radius: 10px;
+    }
+    .expand-search-row { display: flex; align-items: center; gap: 8px; }
+    .expand-search { flex: 1; font-size: 15px; border: 1px solid #EAECF0; border-radius: 8px; padding: 9px 14px; background: #fff; color: #101828; font-family: inherit; outline: none; height: 42px; box-sizing: border-box; }
+    .expand-search:focus { border-color: #2E90FA; }
+    .expand-btn-row { display: flex; align-items: center; gap: 6px; }
+    .ef-btn { font-size: 14px; font-weight: 600; padding: 0 18px; height: 38px; line-height: 1; border-radius: 8px; border: 1px solid #EAECF0; background: #fff; color: #667085; cursor: pointer; font-family: inherit; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+    .ef-btn.on { background: #2E90FA; color: #fff; border-color: #2E90FA; }
+    .ef-collapse { font-size: 14px; font-weight: 600; padding: 0 18px; height: 38px; line-height: 1; border-radius: 8px; border: 1px solid #EAECF0; background: #fff; color: #667085; cursor: pointer; font-family: inherit; white-space: nowrap; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+    .expand-count { font-size: 14px; color: #667085; margin-bottom: 10px; font-weight: 500; }
+    .expand-list { display:flex; flex-direction:column; gap:6px; }
+    .et-row { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border:1px solid #EAECF0; border-radius:8px; border-left:3px solid #F04438; }
+    .et-badge { font-size:12px; font-weight:600; padding:4px 10px; border-radius:5px; background:#FEF3F2; color:#B42318; flex-shrink:0; font-family:inherit; }
+    .et-domain { font-size:15px; font-weight:500; color:#101828; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:inherit; }
+    .et-cat { font-size:13px; color:#667085; flex-shrink:0; font-family:inherit; }
+    .et-date { font-size:13px; color:#98A2B3; flex-shrink:0; font-family:inherit; }
+    .expand-pagination { display:flex; justify-content:center; align-items:center; gap:6px; margin-top:14px; padding-top:12px; border-top:1px solid #EAECF0; flex-wrap:wrap; }
+    .ep-btn { font-size:14px; font-weight:500; width:40px; height:40px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; color:#667085; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; line-height:1; }
+    .ep-btn.nav { width:auto; padding:0 16px; }
+    .ep-btn.on { background:#2E90FA; color:#fff; border-color:#2E90FA; font-weight:700; }
+    .ep-btn:disabled { opacity:0.4; cursor:default; }
+
+    /* ── 자주 조회된 의심 도메인 섹션 ── */
+    .suspect-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
+    .suspect-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+    .suspect-title { font-size:15px; font-weight:700; color:#101828; }
+    .suspect-desc { font-size:12px; color:#98A2B3; margin-bottom:16px; }
+    .tab-group { display:flex; gap:4px; }
+    .stab { font-size:12px; padding:5px 12px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; color:#667085; cursor:pointer; }
+    .stab.on { background:#EFF8FF; color:#1570EF; border-color:#B2DDFF; font-weight:600; }
+    .suspect-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F3F4F8; }
+    .suspect-row:last-child { border-bottom:none; }
+    .s-rank { font-size:12px; font-weight:700; color:#98A2B3; min-width:18px; text-align:center; }
+    .s-info { flex:1; min-width:0; }
+    .s-domain { font-size:13px; font-weight:600; color:#101828; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .s-sub { font-size:12px; color:#667085; margin-top:1px; }
+    .warn-tag { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#B42318; background:#FEF3F2; border:1px solid #FECDCA; padding:3px 9px; border-radius:6px; flex-shrink:0; }
+    .warn-dot { width:5px; height:5px; border-radius:50%; background:#F04438; flex-shrink:0; }
+    .med-tag { display:inline-flex; align-items:center; font-size:11px; font-weight:600; color:#92400E; background:#FFFBEB; border:1px solid #FDE68A; padding:3px 9px; border-radius:6px; flex-shrink:0; }
+
+    /* ── 위협 통계 ── */
+    .threat-stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+    .tsg-card { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:18px 16px; text-align:center; }
+    .tsg-num { font-size:26px; font-weight:800; line-height:1.2; letter-spacing:-0.03em; }
+    .tsg-num.red { color:#F04438; }
+    .tsg-num.amber { color:#F59E0B; }
+    .tsg-num.blue { color:#2E90FA; }
+    .tsg-label { font-size:12px; color:#667085; margin-top:4px; }
+
+    /* ── 사칭 유형 차트 ── */
+    .chart-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
+    .chart-title { font-size:15px; font-weight:700; color:#101828; margin-bottom:16px; }
+    .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .bar-row:last-child { margin-bottom:0; }
+    .bar-label { font-size:13px; color:#667085; min-width:68px; text-align:right; }
+    .bar-track { flex:1; height:8px; background:#F3F4F8; border-radius:4px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:4px; }
+    .bar-val { font-size:13px; color:#667085; min-width:32px; }
+
 @media (max-width: 768px) {
   .info-section { padding: 28px 16px !important; border-radius: 14px !important; margin-bottom: 12px !important; }
   .info-section-dark { padding: 28px 16px !important; border-radius: 14px !important; margin-bottom: 12px !important; }
@@ -34,6 +138,8 @@
   .section-sub-center { font-size: 13px !important; margin-bottom: 20px !important; }
   .step-title { font-size: 15px !important; word-break: keep-all !important; }
   .step-desc { font-size: 13px !important; word-break: keep-all !important; line-height: 1.7 !important; }
+  /* .threat-grid 이미 1열 flex — 별도 모바일 처리 불필요 */
+  .threat-stat-grid { grid-template-columns: 1fr !important; }
 }
 </style>
 </head>
@@ -85,7 +191,128 @@
     </div>
   </div>
 
-<!-- ── 서비스 소개 섹션 ───────────────────────────────────── -->
+  <!-- ── 오늘의 피싱 위협 현황 ── -->
+  <div class="threat-section">
+    <div class="threat-header">
+      <div class="threat-title">
+        <div class="live-dot"></div>
+        실시간 OpenPhish 탐지
+        <span class="live-badge">LIVE</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="today-count" id="top-total-count">탐지 {{ threat_total_count }}건</span>
+        <button class="threats-more-btn" id="expand-toggle-btn" onclick="toggleExpandSection()">전체보기 ▾</button>
+      </div>
+    </div>
+    <div class="threat-slider-wrap">
+      <div class="threat-slider-clip" id="threat-slider-clip">
+        <div class="threat-slider" id="threat-slider">
+          {% for t in recent_threats %}
+          <div class="tc {{ 'high' if '고위험' in t.level else 'med' }}">
+            <div class="tc-top">
+              <span class="tc-badge {{ 'high' if '고위험' in t.level else 'med' }}">{{ t.level }}</span>
+            </div>
+            <div class="tc-body">
+              <div class="tc-domain">{{ t.domain }}</div>
+              <div class="tc-cat">{{ t.category }}</div>
+            </div>
+            <span class="tc-time">{{ t.time_ago }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="threat-slide-nav">
+        <div class="slide-dots" id="slide-dots"></div>
+        <span class="slide-info" id="slide-info"></span>
+        <div class="slide-arrows">
+          <button class="slide-arr" id="slide-prev" onclick="slideMove(-1)">&#8592;</button>
+          <button class="slide-arr" id="slide-next" onclick="slideMove(1)">&#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 전체보기 확장 영역 (기본 숨김) -->
+    <div class="threats-expand" id="threats-expand" style="display:none;">
+      <div class="expand-filter-row">
+        <div class="expand-search-row">
+          <input class="expand-search" id="threat-search" placeholder="도메인 검색..." oninput="filterThreats()">
+        </div>
+        <div class="expand-btn-row">
+          <button class="ef-btn on" onclick="setThreatFilter('all', this)">전체</button>
+          <button class="ef-btn" onclick="setThreatFilter('finance', this)">금융</button>
+          <button class="ef-btn" onclick="setThreatFilter('portal', this)">포털</button>
+          <button class="ef-btn" onclick="setThreatFilter('shopping', this)">쇼핑</button>
+          <button class="ef-btn" onclick="setThreatFilter('other', this)">기타</button>
+        </div>
+      </div>
+      <div class="expand-count" id="expand-count"></div>
+      <div class="expand-list" id="expand-list"></div>
+      <div class="expand-pagination" id="expand-pagination"></div>
+    </div>
+  </div>
+
+  <!-- ── 오늘의 위협 통계 ── -->
+  <div class="threat-stat-grid">
+    <div class="tsg-card">
+      <div class="tsg-num red">{{ threat_today_count }}</div>
+      <div class="tsg-label">탐지된 피싱 URL</div>
+    </div>
+    <div class="tsg-card">
+      <div class="tsg-num amber">{{ threat_finance_count }}</div>
+      <div class="tsg-label">금융기관 사칭</div>
+    </div>
+    <div class="tsg-card">
+      <div class="tsg-num blue">{{ threat_total_count }}</div>
+      <div class="tsg-label">DB 누적 차단 URL</div>
+    </div>
+  </div>
+
+  <!-- ── 사칭 유형 분포 ── -->
+  <div class="chart-section">
+    <div class="chart-title">오늘 탐지된 피싱 유형</div>
+    {% for cat in threat_categories %}
+    <div class="bar-row">
+      <div class="bar-label">{{ cat.name }}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:{{ cat.pct }}%;background:{{ cat.color }};"></div>
+      </div>
+      <div class="bar-val">{{ cat.pct }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── 자주 조회된 의심 도메인 ── -->
+  <div class="suspect-section">
+    <div class="suspect-header">
+      <div>
+        <div class="suspect-title">자주 조회된 의심 도메인</div>
+        <div class="suspect-desc">사용자들이 반복적으로 분석을 요청한 의심 URL</div>
+      </div>
+      <div class="tab-group">
+        <div class="stab on" onclick="loadSuspect('today', this)">오늘</div>
+        <div class="stab" onclick="loadSuspect('week', this)">이번 주</div>
+        <div class="stab" onclick="loadSuspect('all', this)">전체</div>
+      </div>
+    </div>
+    <div id="suspect-list">
+      {% for s in suspect_domains %}
+      <div class="suspect-row">
+        <div class="s-rank">{{ loop.index }}</div>
+        <div class="s-info">
+          <div class="s-domain">{{ s.domain }}</div>
+          <div class="s-sub">{{ s.category }}{% if s.count != '-' %} · {{ s.count }}회 조회{% endif %}</div>
+        </div>
+        {% if '고위험' in s.level %}
+        <div class="warn-tag"><div class="warn-dot"></div>고위험</div>
+        {% else %}
+        <div class="med-tag">중위험</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+<!-- ── 서비스 소개 섹션 ── -->
 <style>
 .info-section { background: #fff; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; border: 1px solid #EAECF0; overflow: hidden; }
 .info-section-dark { background: #101828; border-radius: 20px; padding: 64px 48px; margin-bottom: 20px; overflow: hidden; }
@@ -112,12 +339,11 @@
 .info-feature-desc.white { color: #98A2B3; word-break: keep-all; }
 .visual-box { width: 200px; height: 200px; border-radius: 24px; background: linear-gradient(135deg, #EFF8FF, #DBEAFE); display: flex; align-items: center; justify-content: center; font-size: 72px; line-height: 1; box-shadow: 0 8px 32px rgba(46,144,250,0.15); overflow: hidden; flex-shrink: 0; }
 .visual-box.dark { background: linear-gradient(135deg, #1D2939, #0D2137); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-.visual-box.red { background: linear-gradient(135deg, #FEF3F2, #FFE4E2); box-shadow: 0 8px 32px rgba(240,68,56,0.15); }
 .section-title-center { text-align: center; font-size: 32px; font-weight: 800; color: #101828; letter-spacing: -0.04em; margin-bottom: 8px; }
 .section-sub-center { text-align: center; font-size: 15px; color: #667085; margin-bottom: 48px; }
 .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .step-card { background: #fff; border: 1px solid #EAECF0; border-radius: 16px; padding: 28px 24px; text-align: center; }
-.step-num { width: 48px; height: 48px; border-radius: 50%; background: #2E90FA; color: #fff; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; word-break: keep-all; }
+.step-num { width: 48px; height: 48px; border-radius: 50%; background: #2E90FA; color: #fff; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
 .step-title { font-size: 16px; font-weight: 700; color: #101828; margin-bottom: 8px; word-break: keep-all; }
 .step-desc { font-size: 13px; color: #667085; line-height: 1.7; word-break: keep-all; word-wrap: break-word; }
 @media (max-width: 768px) {
@@ -138,21 +364,21 @@
           <div class="info-feature-icon blue">🔗</div>
           <div>
             <div class="info-feature-title">URL 실시간 분석</div>
-            <div class="info-feature-desc">의심스러운 링크를 크롤링하여 피싱 패턴을 AI로 즉시 분석합니다.</div>
+            <div class="info-feature-desc" style="white-space:nowrap;">의심스러운 링크를 크롤링하여 피싱 패턴을 AI로 즉시 분석합니다.</div>
           </div>
         </div>
         <div class="info-feature">
           <div class="info-feature-icon red">🖼</div>
           <div>
             <div class="info-feature-title">이미지 AI 분석</div>
-            <div class="info-feature-desc">스크린샷을 업로드하면 Gemini AI가 피싱 의심 요소를 탐지합니다.</div>
+            <div class="info-feature-desc" style="white-space:nowrap;">스크린샷을 업로드하면 Gemini AI가 피싱 의심 요소를 탐지합니다.</div>
           </div>
         </div>
         <div class="info-feature">
           <div class="info-feature-icon green">🔔</div>
           <div>
             <div class="info-feature-title">분석 결과 알림</div>
-            <div class="info-feature-desc">분석이 완료되면 알림으로 결과를 빠르게 확인할 수 있습니다.</div>
+            <div class="info-feature-desc" style="white-space:nowrap;">분석이 완료되면 알림으로 결과를 빠르게 확인할 수 있습니다.</div>
           </div>
         </div>
       </div>
@@ -163,44 +389,44 @@
   </div>
 </div>
 
-<!-- 섹션 2: 왜 필요한가 (다크) -->
-<div class="info-section-dark">
-  <div class="info-row reverse">
+<!-- 섹션 2: 왜 필요한가 (라이트) -->
+<div class="info-section">
+  <div class="info-row">
     <div class="info-text">
       <div class="info-badge danger">🚨 피싱 주의</div>
-      <div class="info-h white">클릭 전에<br>반드시 확인하세요</div>
-      <div class="info-p white" style="word-break:keep-all;">피싱 공격은 매년 급증하고 있습니다. 문자나 카카오톡으로 받은 링크, 이메일 속 첨부 이미지를 클릭하기 전에 CodeShot으로 먼저 확인하세요.</div>
+      <div class="info-h">클릭 전에<br>반드시 확인하세요</div>
+      <div class="info-p" style="word-break:keep-all;">피싱 공격은 매년 급증하고 있습니다.<br>링크를 클릭하기 전에 CodeShot으로 먼저 확인하세요.</div>
       <div class="info-feature-list" style="margin-top:24px;">
         <div class="info-feature">
-          <div class="info-feature-icon" style="background:#1D2939;">⚡</div>
+          <div class="info-feature-icon red">⚡</div>
           <div>
-            <div class="info-feature-title white">빠른 분석</div>
-            <div class="info-feature-desc white" style="white-space:nowrap;">평균 15초 이내에 분석 결과를 확인할 수 있습니다.</div>
+            <div class="info-feature-title">빠른 분석</div>
+            <div class="info-feature-desc">평균 15초 이내에 분석 결과를 확인할 수 있습니다.</div>
           </div>
         </div>
         <div class="info-feature">
-          <div class="info-feature-icon" style="background:#1D2939;">🤖</div>
+          <div class="info-feature-icon blue">🤖</div>
           <div>
-            <div class="info-feature-title white">AI 기반 탐지</div>
-            <div class="info-feature-desc white">Google Gemini AI가 텍스트, 이미지, URL 패턴을 종합 분석합니다.</div>
+            <div class="info-feature-title">AI 기반 탐지</div>
+            <div class="info-feature-desc" style="white-space:nowrap;">Google Gemini AI가 텍스트, 이미지, URL 패턴을 종합 분석합니다.</div>
           </div>
         </div>
         <div class="info-feature">
-          <div class="info-feature-icon" style="background:#1D2939;">📊</div>
+          <div class="info-feature-icon green">📊</div>
           <div>
-            <div class="info-feature-title white">분석 이력 관리</div>
-            <div class="info-feature-desc white" style="white-space:nowrap;">모든 분석 내역을 저장하고 언제든지 다시 확인할 수 있습니다.</div>
+            <div class="info-feature-title">분석 이력 관리</div>
+            <div class="info-feature-desc" style="white-space:nowrap;">모든 분석 내역을 저장하고 언제든지 다시 확인할 수 있습니다.</div>
           </div>
         </div>
       </div>
     </div>
     <div class="info-visual">
-      <div class="visual-box dark">
+      <div class="visual-box">
         <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="42" cy="42" r="26" stroke="#60A5FA" stroke-width="7" fill="none"/>
-          <circle cx="42" cy="42" r="14" fill="#1D4ED8" opacity="0.5"/>
-          <circle cx="36" cy="35" r="5" fill="rgba(255,255,255,0.3)"/>
-          <line x1="61" y1="61" x2="82" y2="82" stroke="#A78BFA" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="42" cy="42" r="26" stroke="#2E90FA" stroke-width="7" fill="none"/>
+          <circle cx="42" cy="42" r="14" fill="#DBEAFE" opacity="0.7"/>
+          <circle cx="36" cy="35" r="5" fill="rgba(46,144,250,0.3)"/>
+          <line x1="61" y1="61" x2="82" y2="82" stroke="#6366F1" stroke-width="8" stroke-linecap="round"/>
         </svg>
       </div>
     </div>
@@ -215,12 +441,12 @@
     <div class="step-card">
       <div class="step-num">1</div>
       <div class="step-title" style="white-space:nowrap;">URL 또는 이미지 입력</div>
-      <div class="step-desc">의심스러운 링크를 붙여넣거나<br>이미지를 업로드하세요.</div>
+      <div class="step-desc">의심스러운 링크를 붙여넣거나 이미지를 업로드하세요.</div>
     </div>
     <div class="step-card">
       <div class="step-num">2</div>
       <div class="step-title">AI 자동 분석</div>
-      <div class="step-desc">피싱 패턴·URL 이상 여부, 의심 문구를 AI가 자동으로 분석합니다.</div>
+      <div class="step-desc">피싱 패턴과 URL 이상 여부를 AI가 자동으로 분석합니다.</div>
     </div>
     <div class="step-card">
       <div class="step-num">3</div>
@@ -248,5 +474,209 @@
       <span>👤</span>내정보
     </a>
   </nav>
+
+<script>
+function loadSuspect(period, el) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  fetch('/api/suspect_domains?period=' + period)
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById('suspect-list');
+      list.innerHTML = data.map((s, i) => `
+        <div class="suspect-row">
+          <div class="s-rank">${i+1}</div>
+          <div class="s-info">
+            <div class="s-domain">${s.domain}</div>
+            <div class="s-sub">${s.category}${s.count !== '-' ? ' · ' + s.count + '회 조회' : ''}</div>
+          </div>
+          ${s.level === '고위험'
+            ? '<div class="warn-tag"><div class="warn-dot"></div>고위험</div>'
+            : '<div class="med-tag">중위험</div>'}
+        </div>`).join('');
+    });
+}
+
+/* ── 위협 카드 슬라이더 ── */
+(function() {
+  const ITEMS_PER_SLIDE = 3;
+  let currentSlide = 0;
+
+  function initSlider() {
+    const slider = document.getElementById('threat-slider');
+    if (!slider) return;
+    const items = slider.querySelectorAll('.tc');
+    const total = items.length;
+    if (total === 0) return;
+
+    const totalSlides = Math.ceil(total / ITEMS_PER_SLIDE);
+
+    // 슬라이드 그룹핑: 각 슬라이드에 ITEMS_PER_SLIDE개씩
+    // 실제로는 CSS translateY로 이동하므로 높이 계산
+
+    function updateSlider() {
+      // 각 아이템 높이 합산 방식으로 정확하게 계산
+      const gap = 8;
+      let slideH = 0;
+      for (let i = 0; i < Math.min(ITEMS_PER_SLIDE, total); i++) {
+        slideH += items[i].offsetHeight + gap;
+      }
+
+      slider.style.transform = `translateY(-${currentSlide * slideH}px)`;
+
+      // clip 래퍼에만 height 적용 (nav는 밖에 있어서 잘리지 않음)
+      const clip = document.getElementById('threat-slider-clip');
+      if (clip) clip.style.height = slideH + 'px';
+
+      // dots
+      const dots = document.getElementById('slide-dots');
+      dots.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const d = document.createElement('div');
+        d.className = 'slide-dot' + (i === currentSlide ? ' on' : '');
+        d.onclick = () => { currentSlide = i; updateSlider(); };
+        dots.appendChild(d);
+      }
+      // info
+      const start = currentSlide * ITEMS_PER_SLIDE + 1;
+      const end = Math.min((currentSlide + 1) * ITEMS_PER_SLIDE, total);
+      document.getElementById('slide-info').textContent = `${start}–${end} / ${total}`;
+      // arrows
+      document.getElementById('slide-prev').disabled = currentSlide === 0;
+      document.getElementById('slide-next').disabled = currentSlide === totalSlides - 1;
+    }
+
+    window.slideMove = function(dir) {
+      currentSlide = Math.max(0, Math.min(totalSlides - 1, currentSlide + dir));
+      updateSlider();
+    };
+
+    // 초기화
+    setTimeout(updateSlider, 100);
+    window.addEventListener('resize', updateSlider);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSlider);
+  } else {
+    initSlider();
+  }
+})();
+
+/* ── OpenPhish 전체보기 ── */
+let allThreats = [];
+let filteredThreats = [];
+let currentFilter = 'all';
+let currentPage = 1;
+const PER_PAGE = 10;
+let expandOpen = false; // 전체보기 펼침 여부
+
+/* 슬라이더 info(4-6/6) 숨김 */
+document.addEventListener('DOMContentLoaded', function() {
+  const info = document.getElementById('slide-info');
+  if (info) info.style.display = 'none';
+
+  // 페이지 로드 시 데이터만 불러옴 (영역은 숨김 상태 유지)
+  fetch('/api/threats_all')
+    .then(r => r.json())
+    .then(data => {
+      allThreats = data;
+      filteredThreats = data;
+      currentPage = 1;
+      const countEl = document.getElementById('top-total-count');
+      if (countEl) countEl.textContent = `탐지 ${data.length.toLocaleString()}건`;
+    });
+});
+
+/* 전체보기 토글 */
+function toggleExpandSection() {
+  expandOpen = !expandOpen;
+  const panel = document.getElementById('threats-expand');
+  const btn   = document.getElementById('expand-toggle-btn');
+  if (expandOpen) {
+    panel.style.display = 'block';
+    btn.textContent = '접기 ▴';
+    // 처음 열 때 렌더링
+    applyFilter();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '전체보기 ▾';
+  }
+}
+
+function setThreatFilter(f, el) {
+  currentFilter = f;
+  currentPage = 1;
+  document.querySelectorAll('.expand-btn-row .ef-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  applyFilter();
+}
+
+function applyFilter() {
+  const q = (document.getElementById('threat-search').value || '').toLowerCase();
+  filteredThreats = allThreats.filter(t => {
+    const domainMatch = !q || t.domain.toLowerCase().includes(q);
+    let catMatch = true;
+    if (currentFilter === 'finance') catMatch = t.category.includes('금융');
+    else if (currentFilter === 'portal') catMatch = t.category.includes('포털') || t.category.includes('SNS');
+    else if (currentFilter === 'shopping') catMatch = t.category.includes('쇼핑');
+    else if (currentFilter === 'other') catMatch = t.category === '피싱 사이트';
+    return domainMatch && catMatch;
+  });
+  currentPage = 1;
+  renderThreats();
+}
+
+function filterThreats() { applyFilter(); }
+
+function renderThreats() {
+  // 최신순 정렬
+  const sorted = [...filteredThreats].sort((a, b) => {
+    if (a.date && b.date) return b.date.localeCompare(a.date);
+    return 0;
+  });
+
+  const total = sorted.length;
+  const pg = document.getElementById('expand-pagination');
+  const countEl = document.getElementById('expand-count');
+
+  // 페이지네이션 전체 표시
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PER_PAGE;
+  const items = sorted.slice(start, start + PER_PAGE);
+
+  countEl.textContent = `총 ${total.toLocaleString()}건 · ${currentPage} / ${totalPages} 페이지`;
+  document.getElementById('expand-list').innerHTML = items.map(t => `
+    <div class="et-row">
+      <span class="et-badge">고위험</span>
+      <span class="et-domain">${t.domain}</span>
+      <span class="et-cat">${t.category}</span>
+      <span class="et-date">${t.date}</span>
+    </div>`).join('') || '<div style="font-size:13px;color:#98A2B3;padding:16px 0;text-align:center;">검색 결과가 없어요</div>';
+
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="ep-btn nav" ${currentPage===1?'disabled':''} onclick="goPage(1)">처음</button>`;
+  html += `<button class="ep-btn nav" ${currentPage===1?'disabled':''} onclick="goPage(${currentPage-1})">← 이전</button>`;
+
+  const WING = 2;
+  const rangeStart = Math.max(1, currentPage - WING);
+  const rangeEnd   = Math.min(totalPages, currentPage + WING);
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    html += `<button class="ep-btn ${i===currentPage?'on':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+
+  html += `<button class="ep-btn nav" ${currentPage===totalPages?'disabled':''} onclick="goPage(${currentPage+1})">다음 →</button>`;
+  html += `<button class="ep-btn nav" ${currentPage===totalPages?'disabled':''} onclick="goPage(${totalPages})">끝</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderThreats();
+}
+</script>
 </body>
 </html>

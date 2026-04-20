@@ -177,12 +177,169 @@ def main():
 
     all_records = cur.fetchall()
 
-    # 통계
+    # 사용자 통계
     cur.execute("SELECT COUNT(*) AS cnt FROM tb_crawling WHERE id=%s", (session['user_id'],))
     url_cnt = cur.fetchone()['cnt']
     cur.execute("SELECT COUNT(*) AS cnt FROM tb_upload WHERE id=%s", (session['user_id'],))
     img_cnt = cur.fetchone()['cnt']
     total_cnt = url_cnt + img_cnt
+
+    # ── OpenPhish 위협 현황 ──────────────────────────────────
+    import rag_engine as _rag
+    import re as _re
+    from datetime import date as _date
+    col = _rag.col_blacklist
+    today_str = _date.today().strftime('%Y-%m-%d')
+
+    # ChromaDB 전체 누적 건수 (고유 URL 기준)
+    threat_total_count = col.count() if col else 0
+
+    # 오늘 탐지 건수: 오늘 날짜로 저장된 것 우선, 없으면 전체 누적으로 대체
+    try:
+        today_res = col.get(where={'date': {'$eq': today_str}}) if col else None
+        threat_today_count = len(today_res['ids']) if today_res and today_res['ids'] else 0
+    except Exception:
+        threat_today_count = 0
+    if threat_today_count == 0:
+        threat_today_count = threat_total_count
+
+    # 금융기관 사칭 건수: 샘플 URL에서 금융 키워드 포함 고유 도메인 집계
+    try:
+        sample_res = col.get(limit=min(1000, col.count()), include=['metadatas']) if col else None
+        if sample_res and sample_res.get('metadatas'):
+            finance_kw = ['bank', 'kb', 'shinhan', 'hana', 'woori', 'nh', 'toss',
+                          'pay', 'card', 'finance', 'invest', 'loan', 'credit']
+            seen_f = set()
+            for meta in sample_res['metadatas']:
+                d = _re.sub(r'^https?://', '', meta.get('url', '').lower()).split('/')[0]
+                if d and d not in seen_f and any(k in d for k in finance_kw):
+                    seen_f.add(d)
+            threat_finance_count = len(seen_f)
+        else:
+            threat_finance_count = 0
+    except Exception:
+        threat_finance_count = 0
+
+    # 최근 위협 URL: col.get()으로 전체에서 직접 샘플링 후 중복 도메인 제거해 6개 추출
+    recent_threats = []
+    try:
+        if col and col.count() > 0:
+            # query() 대신 get()으로 대량 샘플링 — 중복 DB에서도 다양한 도메인 확보
+            fetch_n = min(500, col.count())
+            res = col.get(
+                limit=fetch_n,
+                include=['documents', 'metadatas']
+            )
+            docs  = res.get('documents', [])
+            metas = res.get('metadatas', [])
+            seen_domains = set()
+            for doc, meta in zip(docs, metas):
+                if len(recent_threats) >= 6:
+                    break
+                raw_url = meta.get('url', '')
+                if not raw_url:
+                    url_match = _re.search(r'https?://\S+', doc)
+                    raw_url = url_match.group(0) if url_match else doc.split()[0]
+                domain = _re.sub(r'^https?://', '', raw_url).split('/')[0].lower()
+                if not domain or domain in seen_domains:
+                    continue
+                seen_domains.add(domain)
+                level  = meta.get('level', '고위험')
+                target = meta.get('target', '')
+                if not target or target == '불특정':
+                    if any(k in domain for k in ['kakao', 'naver', 'google', 'daum']):
+                        target = '포털·SNS 사칭'
+                    elif any(k in domain for k in ['kb', 'shinhan', 'hana', 'woori', 'nh', 'bank']):
+                        target = '금융기관 사칭'
+                    elif any(k in domain for k in ['toss', 'pay', 'card']):
+                        target = '핀테크·페이 사칭'
+                    elif any(k in domain for k in ['coupang', 'baemin', 'delivery']):
+                        target = '쇼핑·배달 사칭'
+                    else:
+                        target = '피싱 사이트'
+                recent_threats.append({
+                    'domain': domain,
+                    'level': level,
+                    'category': target,
+                    'time_ago': meta.get('date', today_str),
+                })
+    except Exception:
+        pass
+
+    # 사칭 유형 분포 (고정 비율 — 추후 실제 분류 데이터로 교체 가능)
+    threat_categories = [
+        {'name': '금융·은행', 'pct': 72, 'color': '#F04438'},
+        {'name': '포털·SNS', 'pct': 15, 'color': '#F59E0B'},
+        {'name': '쇼핑·배송', 'pct':  9, 'color': '#2E90FA'},
+        {'name': '기타',      'pct':  4, 'color': '#98A2B3'},
+    ]
+
+    # 자주 조회된 의심 도메인
+    # 1순위: tb_crawling 실제 분석 기록 중 고위험·중위험만
+    # 2순위: 없으면 OpenPhish DB에서 고유 도메인 샘플링
+    import re as _re2
+    cur.execute("""
+        SELECT cr_url, COUNT(*) AS cnt,
+               MAX(d.ciritical_level) AS level
+        FROM tb_crawling c
+        LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
+        WHERE d.ciritical_level IN ('고위험', '중위험')
+        GROUP BY cr_url
+        ORDER BY cnt DESC, MAX(c.created_at) DESC
+        LIMIT 6
+    """)
+    raw_suspects = cur.fetchall()
+
+    def _make_cat(domain):
+        dl = domain.lower()
+        if any(k in dl for k in ['kakao', 'naver', 'google', 'daum']):
+            return '포털·SNS 사칭 의심'
+        elif any(k in dl for k in ['kb', 'shinhan', 'hana', 'woori', 'nh', 'bank', 'finance']):
+            return '금융기관 사칭 의심'
+        elif any(k in dl for k in ['toss', 'pay', 'card']):
+            return '핀테크·페이 사칭 의심'
+        elif any(k in dl for k in ['coupang', 'gmarket', 'auction', 'baemin', 'delivery']):
+            return '쇼핑·배달 사칭 의심'
+        return '피싱 의심'
+
+    suspect_domains = []
+    if raw_suspects:
+        for r in raw_suspects:
+            domain = _re2.sub(r'^https?://', '', (r['cr_url'] or '')).split('/')[0]
+            suspect_domains.append({
+                'domain': domain,
+                'count': r['cnt'],
+                'level': r['level'] or '중위험',
+                'category': _make_cat(domain),
+            })
+    else:
+        # fallback: OpenPhish DB 전체에서 고유 도메인 6개 샘플링
+        try:
+            if col and col.count() > 0:
+                fb_res = col.get(
+                    limit=min(500, col.count()),
+                    include=['metadatas']
+                )
+                fb_metas = fb_res.get('metadatas', [])
+                seen = set()
+                for meta in fb_metas:
+                    if len(suspect_domains) >= 6:
+                        break
+                    raw_url = meta.get('url', '')
+                    if not raw_url:
+                        continue
+                    domain = _re2.sub(r'^https?://', '', raw_url).split('/')[0].lower()
+                    if not domain or domain in seen:
+                        continue
+                    seen.add(domain)
+                    suspect_domains.append({
+                        'domain': domain,
+                        'count': '-',
+                        'level': meta.get('level', '고위험'),
+                        'category': _make_cat(domain),
+                    })
+        except Exception:
+            pass
 
     cur.close(); db.close()
 
@@ -192,7 +349,13 @@ def main():
 
     return render_template('main.html', records=records, page=page,
                            total_pages=total_pages, tab=tab,
-                           total_cnt=total_cnt, url_cnt=url_cnt, img_cnt=img_cnt)
+                           total_cnt=total_cnt, url_cnt=url_cnt, img_cnt=img_cnt,
+                           recent_threats=recent_threats,
+                           threat_today_count=threat_today_count,
+                           threat_finance_count=threat_finance_count,
+                           threat_total_count=threat_total_count,
+                           threat_categories=threat_categories,
+                           suspect_domains=suspect_domains)
 
 # ─── 전체 분석 내역 페이지 ──────────────────────────────────
 @app.route('/history')
@@ -847,6 +1010,100 @@ def mypage():
     cur.execute("SELECT * FROM tb_user WHERE id=%s", (session['user_id'],))
     user = cur.fetchone(); cur.close(); db.close()
     return render_template('mypage.html', user=user, error=error, success=success)
+
+
+# ─── API: 자주 조회된 의심 도메인 (탭 전환용) ────────────────
+
+# ─── API: OpenPhish 전체 피싱 URL 목록 ──────────────────────
+@app.route('/api/threats_all')
+def api_threats_all():
+    if 'user_id' not in session: return jsonify([])
+    import rag_engine as _rag
+    import re as _re4
+    col = _rag.col_blacklist
+    if not col or col.count() == 0:
+        return jsonify([])
+    try:
+        res = col.get(
+            limit=min(col.count(), 10000),
+            include=['metadatas']
+        )
+        metas = res.get('metadatas', [])
+        seen = set()
+        result = []
+        for meta in metas:
+            url = meta.get('url', '')
+            if not url:
+                continue
+            domain = _re4.sub(r'^https?://', '', url).split('/')[0].lower()
+            if not domain or domain in seen:
+                continue
+            seen.add(domain)
+            dl = domain
+            if any(k in dl for k in ['kb','shinhan','hana','woori','nh','bank','finance','loan','credit']):
+                cat = '금융기관 사칭'
+            elif any(k in dl for k in ['kakao','naver','google','daum','instagram','facebook']):
+                cat = '포털·SNS 사칭'
+            elif any(k in dl for k in ['toss','pay','card','invest']):
+                cat = '핀테크·페이 사칭'
+            elif any(k in dl for k in ['coupang','gmarket','auction','baemin','delivery']):
+                cat = '쇼핑·배달 사칭'
+            else:
+                cat = '피싱 사이트'
+            result.append({
+                'domain': domain,
+                'level': meta.get('level', '고위험'),
+                'category': cat,
+                'date': meta.get('date', ''),
+            })
+        return jsonify(result)
+    except Exception as e:
+        print(f'[threats_all] 오류: {e}')
+        return jsonify([])
+
+@app.route('/api/suspect_domains')
+def api_suspect_domains():
+    if 'user_id' not in session: return jsonify([])
+    period = request.args.get('period', 'today')
+    import re as _re3
+    db = get_db(); cur = db.cursor(dictionary=True)
+    if period == 'today':
+        where = 'DATE(c.created_at) = CURDATE()'
+    elif period == 'week':
+        where = 'c.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
+    else:
+        where = '1=1'
+    cur.execute(f"""
+        SELECT cr_url, COUNT(*) AS cnt,
+               MAX(d.ciritical_level) AS level
+        FROM tb_crawling c
+        LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
+        WHERE ({where}) AND d.ciritical_level IN ('고위험', '중위험')
+        GROUP BY cr_url
+        ORDER BY cnt DESC, MAX(c.created_at) DESC
+        LIMIT 5
+    """)
+    rows = cur.fetchall(); cur.close(); db.close()
+    result = []
+    for r in rows:
+        domain = _re3.sub(r'^https?://', '', (r['cr_url'] or '')).split('/')[0]
+        if any(k in domain for k in ['kakao', 'naver', 'google']):
+            cat = '포털·SNS 사칭 의심'
+        elif any(k in domain for k in ['bank', 'kb', 'shinhan', 'hana', 'woori', 'nh', 'finance']):
+            cat = '금융기관 사칭 의심'
+        elif any(k in domain for k in ['toss', 'pay', 'card']):
+            cat = '핀테크·페이 사칭 의심'
+        elif any(k in domain for k in ['coupang', 'gmarket', 'auction', 'baemin']):
+            cat = '쇼핑·배달 사칭 의심'
+        else:
+            cat = '피싱 의심'
+        result.append({
+            'domain': domain,
+            'count': r['cnt'],
+            'level': r['level'] or '중위험',
+            'category': cat,
+        })
+    return jsonify(result)
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
