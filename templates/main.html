@@ -20,8 +20,9 @@
     .threat-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:#101828; }
     .live-dot { width:8px; height:8px; border-radius:50%; background:#F04438; flex-shrink:0; animation:livepulse 1.5s infinite; }
     @keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
     .live-badge { font-size:11px; font-weight:700; color:#F04438; }
-    .today-count { font-size:12px; color:#667085; background:#F9FAFB; border:1px solid #EAECF0; border-radius:8px; padding:4px 10px; }
+    .today-count { font-size:14px; color:#667085; background:#F9FAFB; border:1px solid #EAECF0; border-radius:8px; padding:7px 14px; font-weight:500; }
     .threat-grid { display:flex; flex-direction:column; gap:8px; }
     .tc { background:#F9FAFB; border:1px solid #EAECF0; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
     .tc.high { border-left:4px solid #F04438; border-radius:0 10px 10px 0; }
@@ -43,12 +44,12 @@
     .slide-dot { width:6px; height:6px; border-radius:50%; background:#EAECF0; cursor:pointer; transition:all 0.2s; }
     .slide-dot.on { background:#F04438; width:16px; border-radius:3px; }
     .slide-arrows { display:flex; gap:6px; }
-    .slide-arr { width:28px; height:28px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; color:#667085; }
+    .slide-arr { width:28px; height:28px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; color:#667085; padding:0; line-height:1; }
     .slide-arr:hover { background:#EAECF0; }
     .slide-arr:disabled { opacity:0.35; cursor:default; }
     .slide-info { font-size:11px; color:#98A2B3; }
     /* 전체보기 확장 영역 */
-    .threats-more-btn { font-size:12px; font-weight:500; color:#B42318; background:#FEF3F2; border:1px solid #FECDCA; border-radius:8px; padding:5px 12px; cursor:pointer; white-space:nowrap; font-family:inherit; }
+    .threats-more-btn { font-size:14px; font-weight:600; color:#B42318; background:#FEF3F2; border:1px solid #FECDCA; border-radius:8px; padding:7px 16px; cursor:pointer; white-space:nowrap; font-family:inherit; }
     .threats-expand { display:none; margin-top:14px; border-top:1px solid #EAECF0; padding-top:14px; }
     .threat-slider-wrap { position:relative; }
     .expand-filter-row {
@@ -196,8 +197,8 @@
     <div class="threat-header">
       <div class="threat-title">
         <div class="live-dot"></div>
-        실시간 OpenPhish 탐지
-        <span class="live-badge">LIVE</span>
+        OpenPhish 피싱 URL 탐지 현황
+        <span class="live-badge" style="color:#667085;font-size:10px;font-weight:600;background:#F3F4F8;padding:2px 7px;border-radius:5px;">12h 갱신</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="today-count" id="top-total-count">탐지 {{ threat_total_count }}건</span>
@@ -207,26 +208,26 @@
     <div class="threat-slider-wrap">
       <div class="threat-slider-clip" id="threat-slider-clip">
         <div class="threat-slider" id="threat-slider">
-          {% for t in recent_threats %}
-          <div class="tc {{ 'high' if '고위험' in t.level else 'med' }}">
-            <div class="tc-top">
-              <span class="tc-badge {{ 'high' if '고위험' in t.level else 'med' }}">{{ t.level }}</span>
-            </div>
-            <div class="tc-body">
-              <div class="tc-domain">{{ t.domain }}</div>
-              <div class="tc-cat">{{ t.category }}</div>
-            </div>
-            <span class="tc-time">{{ t.time_ago }}</span>
+          <!-- JS가 실시간으로 채움 -->
+          <div id="slider-loading" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:32px 0;color:#98A2B3;font-size:14px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="animation:spin 1s linear infinite;flex-shrink:0;">
+              <circle cx="12" cy="12" r="10" stroke="#EAECF0" stroke-width="3"/>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="#F04438" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            실시간 데이터 불러오는 중...
           </div>
-          {% endfor %}
         </div>
       </div>
       <div class="threat-slide-nav">
         <div class="slide-dots" id="slide-dots"></div>
         <span class="slide-info" id="slide-info"></span>
         <div class="slide-arrows">
-          <button class="slide-arr" id="slide-prev" onclick="slideMove(-1)">&#8592;</button>
-          <button class="slide-arr" id="slide-next" onclick="slideMove(1)">&#8594;</button>
+          <button class="slide-arr" id="slide-prev" onclick="slideMove(-1)">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7L9 3" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="slide-arr" id="slide-next" onclick="slideMove(1)">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -358,7 +359,7 @@
     <div class="info-text">
       <div class="info-badge" style="display:inline-flex;align-items:center;"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><rect x="4" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3.5"/><rect x="26" y="16" width="18" height="16" rx="8" fill="none" stroke="#2E90FA" stroke-width="3.5"/><line x1="23" y1="24" x2="25" y2="24" stroke="#2E90FA" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M26 10L21 25H26L21 38" stroke="#F04438" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>피싱 탐지 플랫폼</div>
       <div class="info-h">CodeShot이란<br>무엇인가요?</div>
-      <div class="info-p" style="word-break:keep-all;">CodeShot은 AI 기술을 활용해 의심스러운 URL과 이미지를 분석하여 피싱 여부를 즉시 판별해주는 보안 플랫폼입니다. 링크를 클릭하기 전에 먼저 확인하세요.</div>
+      <div class="info-p" style="word-break:keep-all;">CodeShot은 AI 기술을 활용해 의심스러운 URL과<br>이미지를 분석하여 피싱 여부를 즉시 판별해주는 보안 플랫폼입니다.<br>링크를 클릭하기 전에 먼저 확인하세요.</div>
       <div class="info-feature-list">
         <div class="info-feature">
           <div class="info-feature-icon blue">🔗</div>
@@ -511,24 +512,16 @@ function loadSuspect(period, el) {
 
     const totalSlides = Math.ceil(total / ITEMS_PER_SLIDE);
 
-    // 슬라이드 그룹핑: 각 슬라이드에 ITEMS_PER_SLIDE개씩
-    // 실제로는 CSS translateY로 이동하므로 높이 계산
-
     function updateSlider() {
-      // 각 아이템 높이 합산 방식으로 정확하게 계산
       const gap = 8;
       let slideH = 0;
       for (let i = 0; i < Math.min(ITEMS_PER_SLIDE, total); i++) {
         slideH += items[i].offsetHeight + gap;
       }
-
       slider.style.transform = `translateY(-${currentSlide * slideH}px)`;
-
-      // clip 래퍼에만 height 적용 (nav는 밖에 있어서 잘리지 않음)
       const clip = document.getElementById('threat-slider-clip');
       if (clip) clip.style.height = slideH + 'px';
 
-      // dots
       const dots = document.getElementById('slide-dots');
       dots.innerHTML = '';
       for (let i = 0; i < totalSlides; i++) {
@@ -537,11 +530,9 @@ function loadSuspect(period, el) {
         d.onclick = () => { currentSlide = i; updateSlider(); };
         dots.appendChild(d);
       }
-      // info
       const start = currentSlide * ITEMS_PER_SLIDE + 1;
       const end = Math.min((currentSlide + 1) * ITEMS_PER_SLIDE, total);
       document.getElementById('slide-info').textContent = `${start}–${end} / ${total}`;
-      // arrows
       document.getElementById('slide-prev').disabled = currentSlide === 0;
       document.getElementById('slide-next').disabled = currentSlide === totalSlides - 1;
     }
@@ -551,10 +542,15 @@ function loadSuspect(period, el) {
       updateSlider();
     };
 
-    // 초기화
     setTimeout(updateSlider, 100);
     window.addEventListener('resize', updateSlider);
   }
+
+  // 외부(폴링)에서 슬라이더 DOM 교체 후 재초기화 시 호출
+  window.reinitSlider = function() {
+    currentSlide = 0;
+    setTimeout(initSlider, 50);
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSlider);
@@ -571,21 +567,84 @@ let currentPage = 1;
 const PER_PAGE = 10;
 let expandOpen = false; // 전체보기 펼침 여부
 
-/* 슬라이더 info(4-6/6) 숨김 */
+/* ── LIVE 폴링: 60초마다 슬라이더 + 탐지 건수 자동 갱신 ── */
+const LIVE_INTERVAL = 60 * 1000; // 60초
+let liveTimer = null;
+let lastTotalCount = 0; // 이전 건수 — 변경 시에만 슬라이더 갱신
+
+function buildSliderCard(t) {
+  const isHigh = t.level && t.level.includes('고위험');
+  const cls = isHigh ? 'high' : 'med';
+  return `
+    <div class="tc ${cls}">
+      <div class="tc-top">
+        <span class="tc-badge ${cls}">${t.level || '고위험'}</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-domain">${t.domain}</div>
+        <div class="tc-cat">${t.category}</div>
+      </div>
+      <span class="tc-time">${t.date || ''}</span>
+    </div>`;
+}
+
+function refreshLiveData(isFirstLoad) {
+  fetch('/api/threats_all')
+    .then(r => r.json())
+    .then(data => {
+      if (!data || !data.length) return;
+
+      // ── 탐지 건수 업데이트 ──────────────────────────────
+      const countEl = document.getElementById('top-total-count');
+      if (countEl) countEl.textContent = `탐지 ${data.length.toLocaleString()}건`;
+
+      // ── 전체보기 목록도 열려있으면 갱신 ──────────────────
+      allThreats = data;
+      if (expandOpen) {
+        applyFilter();
+      } else {
+        filteredThreats = data;
+      }
+
+      // ── 슬라이더 갱신: 건수가 바뀌었거나 최초 로드일 때만 ──
+      if (!isFirstLoad && data.length === lastTotalCount) return;
+      lastTotalCount = data.length;
+
+      // 최신 날짜순 정렬 후 상위 6개로 슬라이더 구성
+      const sorted = [...data].sort((a, b) => {
+        if (a.date && b.date) return b.date.localeCompare(a.date);
+        return 0;
+      });
+      const top6 = sorted.slice(0, 6);
+
+      const slider = document.getElementById('threat-slider');
+      if (!slider) return;
+
+      // 로딩 스피너 제거 후 카드 삽입
+      slider.innerHTML = top6.map(buildSliderCard).join('');
+
+      // 슬라이더 재초기화 (높이·도트 재계산)
+      if (typeof reinitSlider === 'function') reinitSlider();
+
+      // LIVE 점 깜빡임 강조 (새 데이터 수신 시각 피드백)
+      const dot = document.querySelector('.live-dot');
+      if (dot) {
+        dot.style.background = '#12B76A';
+        setTimeout(() => { dot.style.background = '#F04438'; }, 1500);
+      }
+    })
+    .catch(() => {}); // 네트워크 오류 시 조용히 무시
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const info = document.getElementById('slide-info');
   if (info) info.style.display = 'none';
 
-  // 페이지 로드 시 데이터만 불러옴 (영역은 숨김 상태 유지)
-  fetch('/api/threats_all')
-    .then(r => r.json())
-    .then(data => {
-      allThreats = data;
-      filteredThreats = data;
-      currentPage = 1;
-      const countEl = document.getElementById('top-total-count');
-      if (countEl) countEl.textContent = `탐지 ${data.length.toLocaleString()}건`;
-    });
+  // 최초 로드
+  refreshLiveData(true);
+
+  // 60초마다 자동 폴링
+  liveTimer = setInterval(() => refreshLiveData(false), LIVE_INTERVAL);
 });
 
 /* 전체보기 토글 */
@@ -676,6 +735,7 @@ function renderThreats() {
 function goPage(p) {
   currentPage = p;
   renderThreats();
+  document.querySelector('.threats-expand').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 </script>
 </body>

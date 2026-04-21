@@ -1,12 +1,13 @@
 """
 openphish_updater.py — OpenPhish 피드 자동 업데이트
+7일치 데이터 유지: URL 중복 제거 + 오래된 날짜 하루치 자동 삭제
 """
 import requests, threading, time, re, hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 FEED_URL        = "https://openphish.com/feed.txt"
 UPDATE_INTERVAL = 12 * 60 * 60
-DELAY_START     = 60
+KEEP_DAYS       = 7   # 유지할 최대 일수
 LOG_FILE        = "openphish_update.log"
 
 def log(msg):
@@ -20,7 +21,6 @@ def log(msg):
         pass
 
 def get_col():
-    """col_blacklist를 매번 rag_engine에서 가져옴 (None 방지)"""
     import rag_engine
     return rag_engine.col_blacklist
 
@@ -28,22 +28,8 @@ def extract_domain(url):
     return re.sub(r'^https?://', '', url.strip()).split('/')[0]
 
 def make_uid(url):
-    """
-    SHA-256 기반 고정 uid 생성.
-    Python hash()는 실행마다 값이 달라지므로(hash randomization) 사용 불가.
-    SHA-256은 항상 동일한 값을 보장해 중복 체크가 정확히 동작함.
-    """
+    """SHA-256 기반 고정 uid — URL 기준 중복 방지"""
     return "op_" + hashlib.sha256(url.strip().encode()).hexdigest()[:20]
-
-def already_exists(uid):
-    try:
-        col = get_col()
-        if col is None:
-            return False
-        result = col.get(ids=[uid])
-        return len(result['ids']) > 0
-    except Exception:
-        return False
 
 def fetch_openphish_feed():
     try:
@@ -59,69 +45,42 @@ def fetch_openphish_feed():
         log(f"❌ OpenPhish 피드 수신 실패: {e}")
         return []
 
-def purge_duplicate_entries():
+def purge_old_dates(col):
     """
-    기존에 hash() 기반으로 중복 저장된 데이터를 정리하고
-    SHA-256 uid 기준으로 재구축.
-    최초 1회만 실행 (DB에 op_ 접두사 항목이 많으면 실행).
+    7일치 초과 시 가장 오래된 날짜 하루치 삭제.
+    날짜별 고유 목록을 구해서 KEEP_DAYS 초과분부터 제거.
     """
-    col = get_col()
-    if col is None:
-        return
-
-    total = col.count()
-    # 시드 데이터(bl_, case_, pat_ 접두사)는 보존, op_ 접두사만 정리
-    log(f"🧹 중복 정리 시작 — 현재 DB: {total}건")
     try:
-        # op_ 접두사 항목 전체 조회
         result = col.get(where={"source": {"$eq": "OpenPhish 실시간 피드"}})
         if not result or not result['ids']:
-            log("🧹 정리할 OpenPhish 항목 없음")
             return
 
-        ids     = result['ids']
-        metas   = result['metadatas']
+        # 날짜별 id 그룹핑
+        date_map = {}
+        for uid, meta in zip(result['ids'], result['metadatas']):
+            d = meta.get('date', '1970-01-01')
+            date_map.setdefault(d, []).append(uid)
 
-        # URL 기준 고유 항목만 추출
-        seen_urls = {}
-        for uid, meta in zip(ids, metas):
-            url = meta.get('url', '')
-            if not url:
-                continue
-            correct_uid = make_uid(url)
-            if url not in seen_urls:
-                seen_urls[url] = {'correct_uid': correct_uid, 'meta': meta, 'old_ids': [uid]}
-            else:
-                seen_urls[url]['old_ids'].append(uid)
+        dates_sorted = sorted(date_map.keys())  # 오래된 날짜 순
+        excess = len(dates_sorted) - KEEP_DAYS
 
-        # 기존 op_ 항목 전체 삭제
-        chunk_size = 500
-        for i in range(0, len(ids), chunk_size):
-            col.delete(ids=ids[i:i+chunk_size])
-        log(f"🧹 기존 {len(ids)}건 삭제 완료")
+        if excess <= 0:
+            log(f"📅 날짜 보유 현황: {len(dates_sorted)}일치 ({', '.join(dates_sorted)}) — 삭제 없음")
+            return
 
-        # SHA-256 uid로 재삽입
-        today = datetime.now().strftime('%Y-%m-%d')
-        new_ids, new_docs, new_metas = [], [], []
-        for url, info in seen_urls.items():
-            domain = extract_domain(url)
-            new_ids.append(info['correct_uid'])
-            new_docs.append(f"{domain} {url} 피싱사이트 OpenPhish 실시간 탐지 피싱URL")
-            meta = info['meta']
-            meta['date'] = meta.get('date', today)
-            new_metas.append(meta)
+        # 오래된 날짜부터 삭제
+        for old_date in dates_sorted[:excess]:
+            ids_to_del = date_map[old_date]
+            chunk = 500
+            for i in range(0, len(ids_to_del), chunk):
+                col.delete(ids=ids_to_del[i:i+chunk])
+            log(f"🗑 오래된 날짜 삭제: {old_date} — {len(ids_to_del)}건")
 
-            if len(new_ids) >= 100:
-                col.add(ids=new_ids, documents=new_docs, metadatas=new_metas)
-                new_ids, new_docs, new_metas = [], [], []
-
-        if new_ids:
-            col.add(ids=new_ids, documents=new_docs, metadatas=new_metas)
-
-        log(f"✅ 중복 정리 완료 — 정리 후 고유 URL: {len(seen_urls)}건 | 총 DB: {col.count()}건")
+        remaining_dates = dates_sorted[excess:]
+        log(f"📅 유지 중인 날짜: {', '.join(remaining_dates)}")
 
     except Exception as e:
-        log(f"❌ 중복 정리 오류: {e}")
+        log(f"⚠️ 날짜 정리 중 오류(무시): {e}")
 
 def update_rag_from_feed():
     col = get_col()
@@ -134,55 +93,84 @@ def update_rag_from_feed():
     if not urls:
         return
 
-    success = skip = 0
     today = datetime.now().strftime('%Y-%m-%d')
-    batch_ids, batch_docs, batch_metas = [], [], []
+
+    # ── 기존 op_ 항목 전체 조회 ───────────────────────────────
+    try:
+        existing = col.get(where={"source": {"$eq": "OpenPhish 실시간 피드"}})
+        existing_uid_set = set(existing['ids'])
+        # uid → 날짜 매핑 (날짜 업데이트용)
+        uid_to_date = {uid: meta.get('date','') for uid, meta in zip(existing['ids'], existing['metadatas'])}
+    except Exception:
+        existing_uid_set = set()
+        uid_to_date = {}
+
+    # ── 신규/업데이트 처리 ────────────────────────────────────
+    add_ids, add_docs, add_metas = [], [], []
+    update_ids, update_docs, update_metas = [], [], []
+    skip = 0
 
     for url in urls:
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
         uid = make_uid(url)
-        if already_exists(uid):
-            skip += 1
-            continue
-
         domain = extract_domain(url)
-        batch_ids.append(uid)
-        batch_docs.append(f"{domain} {url} 피싱사이트 OpenPhish 실시간 탐지 피싱URL")
-        batch_metas.append({"type": "피싱URL", "target": "불특정", "level": "고위험",
-                            "source": "OpenPhish 실시간 피드", "date": today, "url": url})
+        doc = f"{domain} {url} 피싱사이트 OpenPhish 실시간 탐지 피싱URL"
+        meta = {"type": "피싱URL", "target": "불특정", "level": "고위험",
+                "source": "OpenPhish 실시간 피드", "date": today, "url": url}
 
-        if len(batch_ids) >= 100:
-            try:
-                col.add(ids=batch_ids, documents=batch_docs, metadatas=batch_metas)
-                success += len(batch_ids)
-                log(f"  ✅ {success}건 추가됨...")
-            except Exception as e:
-                log(f"  ⚠️ 배치 오류: {e}")
-            batch_ids, batch_docs, batch_metas = [], [], []
+        if uid in existing_uid_set:
+            # 이미 있는 URL — 날짜가 오늘이 아니면 오늘 날짜로 업데이트
+            if uid_to_date.get(uid) != today:
+                update_ids.append(uid)
+                update_docs.append(doc)
+                update_metas.append(meta)
+            else:
+                skip += 1
+        else:
+            # 새 URL
+            add_ids.append(uid)
+            add_docs.append(doc)
+            add_metas.append(meta)
 
-    if batch_ids:
+    # 날짜 업데이트 (삭제 후 재삽입)
+    updated = 0
+    if update_ids:
         try:
-            col.add(ids=batch_ids, documents=batch_docs, metadatas=batch_metas)
-            success += len(batch_ids)
+            chunk = 500
+            for i in range(0, len(update_ids), chunk):
+                col.delete(ids=update_ids[i:i+chunk])
+            for i in range(0, len(update_ids), 100):
+                col.add(ids=update_ids[i:i+100],
+                        documents=update_docs[i:i+100],
+                        metadatas=update_metas[i:i+100])
+            updated = len(update_ids)
+            log(f"  🔄 날짜 갱신: {updated}건 → {today}")
         except Exception as e:
-            log(f"  ⚠️ 마지막 배치 오류: {e}")
+            log(f"  ⚠️ 날짜 갱신 오류: {e}")
+
+    # 신규 추가
+    added = 0
+    for i in range(0, len(add_ids), 100):
+        try:
+            col.add(ids=add_ids[i:i+100],
+                    documents=add_docs[i:i+100],
+                    metadatas=add_metas[i:i+100])
+            added += len(add_ids[i:i+100])
+            log(f"  ✅ {added}건 추가됨...")
+        except Exception as e:
+            log(f"  ⚠️ 배치 오류: {e}")
+
+    # ── 7일치 초과 날짜 정리 ──────────────────────────────────
+    purge_old_dates(col)
 
     after = col.count()
     next_t = datetime.fromtimestamp(time.time() + UPDATE_INTERVAL).strftime('%Y-%m-%d %H:%M:%S')
-    log(f"✅ 완료 | 신규: {success}건 | 스킵: {skip}건 | 총 DB: {after}건")
+    log(f"✅ 완료 | 신규: {added}건 | 날짜갱신: {updated}건 | 스킵: {skip}건 | 총 DB: {after}건")
     log(f"⏰ 다음 업데이트: {next_t}")
 
 def run_updater():
-    log(f"⏰ OpenPhish 업데이터 대기 중... ({DELAY_START}초 후 첫 실행)")
-    time.sleep(DELAY_START)
-
-    # 최초 실행 시 기존 중복 데이터 정리
-    try:
-        purge_duplicate_entries()
-    except Exception as e:
-        log(f"⚠️ 중복 정리 중 오류(무시): {e}")
-
+    log("🚀 OpenPhish 업데이터 시작 — 서버 시작 즉시 첫 실행")
     while True:
         try:
             update_rag_from_feed()
@@ -193,4 +181,4 @@ def run_updater():
 def start_background_updater():
     thread = threading.Thread(target=run_updater, daemon=True, name="OpenPhish-Updater")
     thread.start()
-    print(f"✅ OpenPhish 자동 업데이터 등록 (서버 시작 {DELAY_START}초 후 첫 실행, 중복 정리 포함)")
+    print(f"✅ OpenPhish 자동 업데이터 등록 (서버 시작 즉시 첫 실행, 이후 {UPDATE_INTERVAL//3600}시간 주기, 7일치 유지)")
