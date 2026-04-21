@@ -53,7 +53,7 @@
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
-  <div class="apple-timer" id="timer-text">약 15초 남음</div>
+  <div class="apple-timer" id="timer-text">약 10초 남음</div>
   <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
   <div style="font-size:13px;color:#98A2B3;font-weight:600;">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
@@ -87,7 +87,7 @@
 const CR_TIPS = [
   { icon:'🔗', text:'카카오·네이버·은행 등을 사칭한 링크, 문자·카톡으로 받은 의심 링크를 분석해보세요.' },
   { icon:'🔍', text:'URL 주소에서 철자 하나만 달라도 피싱일 수 있어요. (예: naver → nave r)' },
-  { icon:'⏱', text:'분석에 약 15초 소요됩니다. 완료되면 자동으로 결과 화면으로 이동해요.' },
+  { icon:'⏱', text:'분석에 약 10초 소요됩니다. 완료되면 자동으로 결과 화면으로 이동해요.' },
   { icon:'📞', text:'피싱이 의심되면 한국인터넷진흥원(KISA) 118로 즉시 신고하세요.' },
   { icon:'🏦', text:'금융기관은 절대 문자로 앱 설치나 개인정보를 요구하지 않아요.' },
   { icon:'🚨', text:'링크를 눌렀다면 즉시 비행기 모드로 전환하고 금융사에 연락하세요.' },
@@ -112,11 +112,11 @@ function renderCr(i, reset) {
     d.onclick = () => { crIdx=j; renderCr(j, true); };
     dots.appendChild(d);
   });
-  if (reset) { clearInterval(crTimer); crTimer = setInterval(() => { crIdx=(crIdx+1)%CR_TIPS.length; renderCr(crIdx); }, 3000); }
+  if (reset) { clearInterval(crTimer); crTimer = setInterval(() => { crIdx=(crIdx+1)%CR_TIPS.length; renderCr(crIdx); }, 2000); }
 }
 renderCr(0, true);
 
-const TOTAL = 15;
+const TOTAL = 10;
 const steps = [
   { at: 0,  text: '웹사이트에 접속하는 중...' },
   { at: 15, text: '페이지 내용을 수집하는 중...' },
@@ -172,7 +172,7 @@ document.getElementById('crawl-form').addEventListener('submit', function(e) {
   tipInterval = setInterval(() => {
     tipIdx = (tipIdx + 1) % TIPS.length;
     renderTip(tipIdx);
-  }, 3000);
+  }, 2000);
 
   let elapsed = 0;
   const bar   = document.getElementById('bar-fill');
@@ -184,6 +184,9 @@ document.getElementById('crawl-form').addEventListener('submit', function(e) {
     bar.style.width = pct + '%';
     const remaining = Math.max(TOTAL - elapsed, 1);
     timer.textContent = `약 ${remaining}초 남음`;
+    if (elapsed >= TOTAL) {
+      timer.innerHTML = '<div style="text-align:center;"><span style="display:block;position:relative;right:0.15em;">거의 완료됐어요!</span><span style="display:block;">잠시만 기다려주세요.</span></div>';
+    }
     if (elapsed >= TOTAL * 3) clearInterval(interval);
   }, 1000);
 });

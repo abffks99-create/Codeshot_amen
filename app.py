@@ -575,7 +575,7 @@ def upload():
       "desc": "핵심만 1문장으로. 예: '복수 기관 사칭·긴급 문구·개인정보 요구 — 고위험 3중 패턴 탐지.'"
     },
     {
-      "status": "danger 또는 warning 또는 safe 중 하나",
+      "status": "danger 또는 warning 또는 safe 중 하나 (naver.com, google.com 등 공식적으로 검증된 사이트는 safe, 위험한 사이트면 danger, 확실히 안전하지 않거나 애매하면 warning)",
       "title": "사용자 행동 권고",
       "desc": "핵심만 1문장으로. 예: '즉시 무시하고 공식 앱에서 직접 확인하세요.'"
     }
@@ -609,10 +609,18 @@ def upload():
                 "RAG·블랙리스트 등 내부 시스템 용어는 절대 노출하지 마세요.\n"
                 "사용자가 즉시 이해하고 행동할 수 있도록 친근하게 쓰세요.\n"
                 + JSON_TEMPLATE +
-                "\nstatus 값 선택 기준:\n"
-                "- danger: 명확한 위협 요소 발견\n"
-                "- warning: 주의가 필요한 요소 발견\n"
-                "- safe: 이상 없음\n\n"
+                "\n⚠️ status 값 선택 기준 — 반드시 엄격하게 적용하세요:\n"
+                "- safe(안전 초록점): 해당 항목이 100% 확실하게 정상임이 입증될 때만 사용\n"
+                "  예) 유사 사례 매칭 → 유사 사례가 전혀 없을 때는 safe가 아닌 warning 사용\n"
+                "- warning(주의 노란점): 확인이 필요하거나 애매한 경우, 정보가 부족한 경우\n"
+                "- danger(위험 빨간점): 명확한 위협 요소 발견\n"
+                "safe는 해당 항목이 완전히 검증된 경우에만 사용하고, 불확실하면 warning을 사용하세요.\n\n"
+                "⚠️ level(전체 위험도) 판정 기준:\n"
+                "- 안전: 모든 항목이 100% 안전하고 피싱 요소가 전혀 없을 때만 사용\n"
+                "- 저위험: 의심 요소가 매우 적고 정상일 가능성이 높을 때\n"
+                "- 중위험: 확실하지 않거나 애매한 경우, 의심 요소가 일부 있을 때\n"
+                "- 고위험: 피싱 패턴이 명확히 발견될 때\n"
+                "확실히 안전하다고 보장할 수 없으면 반드시 중위험 이상으로 판정하세요.\n\n"
                 "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
             )
             from google.genai import types as _gtypes
@@ -690,7 +698,7 @@ def crawl():
             return render_template('crawl.html', error='올바른 URL을 입력해주세요.')
 
         try:
-            resp = req.get(url, timeout=5, headers={'User-Agent':'Mozilla/5.0'})
+            resp = req.get(url, timeout=3, headers={'User-Agent':'Mozilla/5.0'})
             soup = BeautifulSoup(resp.text, 'html.parser')
             cols = [
                 (soup.title.string if soup.title else '제목 없음')[:200],
@@ -756,7 +764,7 @@ def crawl():
       "desc": "핵심만 1문장으로. 예: '도메인 위장·신규 도메인·복수 기관 사칭 3가지 고위험 패턴 동시 탐지.'"
     },
     {
-      "status": "danger 또는 warning 또는 safe 중 하나",
+      "status": "danger 또는 warning 또는 safe 중 하나 (naver.com, google.com 등 공식적으로 검증된 사이트는 safe, 위험한 사이트면 danger, 확실히 안전하지 않거나 애매하면 warning)",
       "title": "사용자 행동 권고",
       "desc": "핵심만 1문장으로. 예: '즉시 접속 중단 후 해당 금융사 공식 앱으로 직접 확인하세요.'"
     }
@@ -800,10 +808,19 @@ def crawl():
             "RAG·블랙리스트 등 내부 시스템 용어는 절대 노출하지 마세요.\n"
             "사용자가 즉시 이해하고 행동할 수 있도록 친근하게 쓰세요.\n"
             + JSON_TEMPLATE_CRAWL +
-            "\nstatus 값 선택 기준:\n"
-            "- danger: 명확한 위협 요소 발견\n"
-            "- warning: 주의가 필요한 요소 발견\n"
-            "- safe: 이상 없음\n\n"
+            "\n⚠️ status 값 선택 기준 — 반드시 엄격하게 적용하세요:\n"
+            "- safe(안전 초록점): 해당 항목이 100% 확실하게 정상임이 입증될 때만 사용\n"
+            "  예) 유사 사례 매칭 → 유사 사례가 전혀 없을 때는 safe가 아닌 warning 사용\n"
+            "  예) URL 이상 여부 → URL만 봐서 이상 없어도 내용 확인 전이면 warning 사용\n"
+            "- warning(주의 노란점): 확인이 필요하거나 애매한 경우, 정보가 부족한 경우\n"
+            "- danger(위험 빨간점): 명확한 위협 요소 발견\n"
+            "safe는 해당 항목이 완전히 검증된 경우에만 사용하고, 불확실하면 warning을 사용하세요.\n\n"
+            "⚠️ level(전체 위험도) 판정 기준:\n"
+            "- 안전: 공식 인증된 기관 사이트이고 모든 항목이 100% 안전할 때만 사용\n"
+            "- 저위험: 의심 요소가 매우 적고 정상일 가능성이 높을 때\n"
+            "- 중위험: 확실하지 않거나 애매한 경우, 의심 요소가 일부 있을 때\n"
+            "- 고위험: 피싱 패턴이 명확히 발견될 때\n"
+            "확실히 안전하다고 보장할 수 없으면 반드시 중위험 이상으로 판정하세요.\n\n"
             "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
         )
 
@@ -857,7 +874,8 @@ def crawl():
             if '고위험' in level_str: critical_level = '고위험'
             elif '중위험' in level_str: critical_level = '중위험'
             elif '저위험' in level_str: critical_level = '저위험'
-            else: critical_level = '안전'
+            elif level_str.strip() == '안전': critical_level = '안전'
+            else: critical_level = '중위험'  # 불명확한 경우 안전 대신 중위험으로
             if is_blacklisted: critical_level = '고위험'
         except Exception as e:
             ai_result = friendly_ai_error(e); critical_level = '오류'

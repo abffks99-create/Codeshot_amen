@@ -53,7 +53,7 @@
     <div class="tip-desc" id="tip-desc">분석하는 동안 피싱 예방 지식을 확인해보세요.</div>
     <div class="tip-dots" id="tip-dots"></div>
   </div>
-  <div class="apple-timer" id="timer-text">약 15초 남음</div>
+  <div class="apple-timer" id="timer-text">약 10초 남음</div>
   <div class="apple-bar-wrap"><div class="apple-bar-fill" id="bar-fill"></div></div>
   <div style="font-size:13px;color:#98A2B3;font-weight:600;">분석 완료 시 자동으로 결과 화면으로 이동해요</div>
 </div>
@@ -90,7 +90,7 @@
 <script>
 const UP_TIPS = [
   { icon:'🛡', text:'의심스러운 이미지(문자 캡처, 앱 화면 등)를 업로드하면 AI가 피싱 여부를 분석해요.' },
-  { icon:'⏱', text:'분석에 약 15초 소요됩니다. 완료되면 자동으로 결과 화면으로 이동해요.' },
+  { icon:'⏱', text:'분석에 약 10초 소요됩니다. 완료되면 자동으로 결과 화면으로 이동해요.' },
   { icon:'🔒', text:'이미지는 분석 후 서버에 저장되지 않아요. 안심하고 사용하세요.' },
   { icon:'📞', text:'피싱이 의심되면 한국인터넷진흥원(KISA) 118로 즉시 신고하세요.' },
   { icon:'🏦', text:'금융기관은 절대 문자로 앱 설치나 개인정보를 요구하지 않아요.' },
@@ -116,7 +116,7 @@ function renderUp(i, reset) {
     d.onclick = () => { upIdx=j; renderUp(j, true); };
     dots.appendChild(d);
   });
-  if (reset) { clearInterval(upTimer); upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUp(upIdx); }, 3000); }
+  if (reset) { clearInterval(upTimer); upTimer = setInterval(() => { upIdx=(upIdx+1)%UP_TIPS.length; renderUp(upIdx); }, 2000); }
 }
 renderUp(0, true);
 
@@ -161,7 +161,7 @@ document.addEventListener('paste', e => {
 });
 
 // Apple 로딩 애니메이션
-const TOTAL = 15; // 예상 소요 시간(초)
+const TOTAL = 10; // 예상 소요 시간(초)
 const steps = [
   { at: 0,  text: '이미지를 업로드하는 중...' },
   { at: 20, text: 'AI가 이미지를 분석하는 중...' },
@@ -211,7 +211,7 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
   setInterval(() => {
     tipIdx = (tipIdx + 1) % TIPS.length;
     renderTip(tipIdx);
-  }, 3000);
+  }, 2000);
 
   let elapsed = 0;
   const bar   = document.getElementById('bar-fill');
@@ -223,6 +223,9 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
     bar.style.width = pct + '%';
     const remaining = Math.max(TOTAL - elapsed, 1);
     timer.textContent = `약 ${remaining}초 남음`;
+    if (elapsed >= TOTAL) {
+      timer.innerHTML = '<div style="text-align:center;"><span style="display:block;position:relative;right:0.15em;">거의 완료됐어요!</span><span style="display:block;">잠시만 기다려주세요.</span></div>';
+    }
     if (elapsed >= TOTAL * 3) clearInterval(interval);
   }, 1000);
 });
