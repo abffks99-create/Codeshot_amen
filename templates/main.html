@@ -16,8 +16,8 @@
 
     /* ── OpenPhish 위협 섹션 ── */
     .threat-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
-    .threat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-    .threat-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:#101828; }
+    .threat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
+    .threat-title { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:700; color:#101828; flex:1; min-width:0; flex-wrap:wrap; }
     .live-dot { width:8px; height:8px; border-radius:50%; background:#F04438; flex-shrink:0; animation:livepulse 1.5s infinite; }
     @keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
@@ -84,11 +84,11 @@
 
     /* ── 자주 조회된 의심 도메인 섹션 ── */
     .suspect-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
-    .suspect-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+    .suspect-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:4px; gap:8px; flex-wrap:wrap; }
     .suspect-title { font-size:15px; font-weight:700; color:#101828; }
     .suspect-desc { font-size:12px; color:#98A2B3; margin-bottom:16px; }
-    .tab-group { display:flex; gap:4px; }
-    .stab { font-size:12px; padding:5px 12px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; color:#667085; cursor:pointer; }
+    .tab-group { display:flex; gap:4px; flex-shrink:0; }
+    .stab { font-size:12px; padding:6px 14px; border-radius:8px; border:1px solid #EAECF0; background:#F9FAFB; color:#667085; cursor:pointer; white-space:nowrap; min-height:34px; display:flex; align-items:center; }
     .stab.on { background:#EFF8FF; color:#1570EF; border-color:#B2DDFF; font-weight:600; }
     .suspect-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F3F4F8; }
     .suspect-row:last-child { border-bottom:none; }
@@ -140,7 +140,15 @@
   .step-title { font-size: 15px !important; word-break: keep-all !important; }
   .step-desc { font-size: 13px !important; word-break: keep-all !important; line-height: 1.7 !important; }
   /* .threat-grid 이미 1열 flex — 별도 모바일 처리 불필요 */
-  .threat-stat-grid { grid-template-columns: 1fr !important; }
+  .threat-stat-grid { grid-template-columns: repeat(3,1fr) !important; }
+  .threat-section { padding: 16px !important; }
+  .suspect-section { padding: 16px !important; }
+  .threat-title { font-size: 13px !important; }
+  .today-count { font-size: 12px !important; padding: 5px 10px !important; }
+  .threats-more-btn { font-size: 12px !important; padding: 5px 10px !important; white-space: nowrap; }
+  .tsg-num { font-size: 20px !important; }
+  .tsg-label { font-size: 11px !important; }
+  .tsg-card { padding: 14px 10px !important; }
 }
 </style>
 </head>
