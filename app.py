@@ -552,7 +552,7 @@ def upload():
             img_mime = mime_map.get(ext, 'image/jpeg')
             JSON_TEMPLATE = '''
 {
-  "level": "고위험 또는 중위험 또는 저위험 또는 안전 중 하나",
+  "level": "고위험 또는 주의 또는 안전 중 하나",
   "items": [
     {
       "status": "danger 또는 warning 또는 safe 중 하나",
@@ -617,10 +617,9 @@ def upload():
                 "safe는 해당 항목이 완전히 검증된 경우에만 사용하고, 불확실하면 warning을 사용하세요.\n\n"
                 "⚠️ level(전체 위험도) 판정 기준:\n"
                 "- 안전: 모든 항목이 100% 안전하고 피싱 요소가 전혀 없을 때만 사용\n"
-                "- 저위험: 의심 요소가 매우 적고 정상일 가능성이 높을 때\n"
-                "- 중위험: 확실하지 않거나 애매한 경우, 의심 요소가 일부 있을 때\n"
+                "- 주의: 의심 요소가 일부 있거나 확실하지 않은 경우 (저위험·중위험 모두 포함)\n"
                 "- 고위험: 피싱 패턴이 명확히 발견될 때\n"
-                "확실히 안전하다고 보장할 수 없으면 반드시 중위험 이상으로 판정하세요.\n\n"
+                "확실히 안전하다고 보장할 수 없으면 반드시 주의 이상으로 판정하세요.\n\n"
                 "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
             )
             from google.genai import types as _gtypes
@@ -741,7 +740,7 @@ def crawl():
 
         JSON_TEMPLATE_CRAWL = '''
 {
-  "level": "고위험 또는 중위험 또는 저위험 또는 안전 중 하나",
+  "level": "고위험 또는 주의 또는 안전 중 하나",
   "items": [
     {
       "status": "danger 또는 warning 또는 safe 중 하나",
@@ -817,10 +816,9 @@ def crawl():
             "safe는 해당 항목이 완전히 검증된 경우에만 사용하고, 불확실하면 warning을 사용하세요.\n\n"
             "⚠️ level(전체 위험도) 판정 기준:\n"
             "- 안전: 공식 인증된 기관 사이트이고 모든 항목이 100% 안전할 때만 사용\n"
-            "- 저위험: 의심 요소가 매우 적고 정상일 가능성이 높을 때\n"
-            "- 중위험: 확실하지 않거나 애매한 경우, 의심 요소가 일부 있을 때\n"
+            "- 주의: 의심 요소가 일부 있거나 확실하지 않은 경우 (저위험·중위험 모두 포함)\n"
             "- 고위험: 피싱 패턴이 명확히 발견될 때\n"
-            "확실히 안전하다고 보장할 수 없으면 반드시 중위험 이상으로 판정하세요.\n\n"
+            "확실히 안전하다고 보장할 수 없으면 반드시 주의 이상으로 판정하세요.\n\n"
             "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
         )
 
@@ -872,10 +870,9 @@ def crawl():
                 level_str = raw
 
             if '고위험' in level_str: critical_level = '고위험'
-            elif '중위험' in level_str: critical_level = '중위험'
-            elif '저위험' in level_str: critical_level = '저위험'
+            elif '주의' in level_str: critical_level = '주의'
             elif level_str.strip() == '안전': critical_level = '안전'
-            else: critical_level = '중위험'  # 불명확한 경우 안전 대신 중위험으로
+            else: critical_level = '주의'  # 불명확한 경우 주의로
             if is_blacklisted: critical_level = '고위험'
         except Exception as e:
             ai_result = friendly_ai_error(e); critical_level = '오류'
