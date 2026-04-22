@@ -870,8 +870,8 @@ def crawl():
                 level_str = raw
 
             if '고위험' in level_str: critical_level = '고위험'
-            elif '주의' in level_str: critical_level = '주의'
-            elif level_str.strip() == '안전': critical_level = '안전'
+            elif '주의' in level_str or '저위험' in level_str: critical_level = '주의'
+            elif '안전' in level_str: critical_level = '안전'
             else: critical_level = '주의'  # 불명확한 경우 주의로
             if is_blacklisted: critical_level = '고위험'
         except Exception as e:
