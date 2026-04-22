@@ -910,6 +910,85 @@ def result_crawl(deep_idx):
     return render_template('result_crawl.html', result=result)
 
 
+@app.route('/retry/upload/<int:deep_idx>', methods=['POST'])
+def retry_upload(deep_idx):
+    """오류난 이미지를 저장된 파일 그대로 재분석"""
+    if 'user_id' not in session: return redirect(url_for('login'))
+    db = get_db(); cur = db.cursor(dictionary=True)
+    cur.execute("""SELECT u.upload_idx, u.file_name, u.file_size, u.file_ext
+        FROM tb_deep_upload d JOIN tb_upload u ON d.upload_idx=u.upload_idx
+        WHERE d.deep_idx=%s AND u.id=%s""", (deep_idx, session['user_id']))
+    row = cur.fetchone()
+    if not row: cur.close(); db.close(); return redirect(url_for('main'))
+
+    upload_idx = row['upload_idx']
+    ext = row['file_ext']
+    save_path = os.path.join('static', 'uploads', row['file_name'])
+
+    try:
+        from google.genai import types as _gtypes
+        import base64 as _b64, time as _time
+
+        with open(save_path, 'rb') as _f:
+            img_bytes = _f.read()
+        mime_map = {'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png',
+                    'gif':'image/gif','webp':'image/webp','bmp':'image/bmp',
+                    'tiff':'image/tiff','tif':'image/tiff','heic':'image/heic',
+                    'heif':'image/heif','svg':'image/svg+xml','ico':'image/x-icon'}
+        img_mime = mime_map.get(ext, 'image/jpeg')
+
+        rag_result = search_rag(f"이미지 피싱 스크린샷 {row['file_name']}", n_each=2)
+        rag_context = build_rag_context(rag_result)
+
+        image_prompt = (
+            f"[RAG 참고 데이터]\n{rag_context}\n\n"
+            "위 참고 데이터를 바탕으로 이 이미지가 피싱인지 분석해줘.\n"
+            "답변은 반드시 한국어로 작성하고, JSON만 출력하세요.\n"
+        )
+
+        _models = ['gemini-2.5-flash', 'gemini-1.5-flash']
+        response = None
+        for _model in _models:
+            for _attempt in range(2):
+                try:
+                    response = client.models.generate_content(
+                        model=_model,
+                        contents=[
+                            _gtypes.Part.from_text(text=image_prompt),
+                            _gtypes.Part.from_bytes(data=img_bytes, mime_type=img_mime),
+                        ]
+                    )
+                    break
+                except Exception as _e:
+                    if _attempt == 0: _time.sleep(2)
+            if response: break
+        if not response: raise Exception('모든 모델 호출 실패')
+
+        raw = response.text.strip()
+        def safe_parse_json(text):
+            if '```' in text:
+                text = text.split('```')[1]
+                if text.startswith('json'): text = text[4:]
+            text = text.strip()
+            s, e2 = text.find('{'), text.rfind('}')
+            if s != -1 and e2 != -1: text = text[s:e2+1]
+            return json.loads(text)
+        try:
+            parsed = safe_parse_json(raw)
+            ai_result = json.dumps(parsed, ensure_ascii=False)
+        except Exception:
+            ai_result = raw
+        deep_model = 'gemini-2.5-flash (재분석)'
+    except Exception as e:
+        ai_result = friendly_ai_error(e)
+        deep_model = 'Gemini 2.5 Flash (Error)'
+
+    cur.execute("UPDATE tb_deep_upload SET deep_result=%s, deep_model=%s WHERE deep_idx=%s",
+                (ai_result, deep_model, deep_idx))
+    db.commit(); cur.close(); db.close()
+    return redirect(url_for('result_upload', deep_idx=deep_idx))
+
+
 # ─── 분석 내역 전체 삭제 ────────────────────────────────────
 @app.route('/delete/all_records', methods=['POST'])
 def delete_all_records():

@@ -218,7 +218,10 @@
       <div style="font-size:14px;color:#667085;line-height:1.8;word-break:keep-all;">
         일시적인 오류로 분석 결과를 가져오지 못했습니다.<br>잠시 후 다시 시도해 주세요.
       </div>
-      <a href="/crawl" class="btn btn-primary" style="width:auto;padding:10px 28px;margin-top:4px;">🔍 다시 분석하기</a>
+      <form method="POST" action="/crawl">
+        <input type="hidden" name="url" value="{{ result.cr_url }}">
+        <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 28px;margin-top:4px;">🔍 다시 분석하기</button>
+      </form>
     </div>
     {% else %}
     {% set raw = result.total_analysis %}
