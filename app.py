@@ -275,7 +275,7 @@ def main():
     ]
 
     # 자주 조회된 의심 도메인
-    # 1순위: tb_crawling 실제 분석 기록 중 고위험·중위험만
+    # 1순위: tb_crawling 실제 분석 기록 중 고위험·주의 (전체 사용자 기준)
     # 2순위: 없으면 OpenPhish DB에서 고유 도메인 샘플링
     import re as _re2
     cur.execute("""
@@ -283,7 +283,7 @@ def main():
                MAX(d.ciritical_level) AS level
         FROM tb_crawling c
         LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
-        WHERE d.ciritical_level IN ('고위험', '중위험')
+        WHERE d.ciritical_level IN ('고위험', '주의')
         GROUP BY cr_url
         ORDER BY cnt DESC, MAX(c.created_at) DESC
         LIMIT 6
@@ -309,7 +309,7 @@ def main():
             suspect_domains.append({
                 'domain': domain,
                 'count': r['cnt'],
-                'level': r['level'] or '중위험',
+                'level': r['level'] or '주의',
                 'category': _make_cat(domain),
             })
     else:
@@ -1093,7 +1093,7 @@ def api_suspect_domains():
                MAX(d.ciritical_level) AS level
         FROM tb_crawling c
         LEFT JOIN tb_deep_crawling d ON c.cr_idx = d.crawling_idx
-        WHERE ({where}) AND d.ciritical_level IN ('고위험', '중위험')
+        WHERE ({where}) AND d.ciritical_level IN ('고위험', '주의')
         GROUP BY cr_url
         ORDER BY cnt DESC, MAX(c.created_at) DESC
         LIMIT 5
@@ -1115,7 +1115,7 @@ def api_suspect_domains():
         result.append({
             'domain': domain,
             'count': r['cnt'],
-            'level': r['level'] or '중위험',
+            'level': r['level'] or '주의',
             'category': cat,
         })
     return jsonify(result)
