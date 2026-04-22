@@ -136,7 +136,7 @@
       <tr><td>파일명</td><td><strong>{{ result.file_name }}</strong></td></tr>
       <tr><td>파일크기</td><td>{{ result.file_size }}</td></tr>
       <tr><td>확장자</td><td>{{ result.file_ext | upper }}</td></tr>
-      <tr><td>분석 모델</td><td>{{ result.deep_model | replace('GPT-4o Vision', 'Gemini 2.5 Flash') }}</td></tr>
+      <tr><td>분석 모델</td><td>{{ result.deep_model }}</td></tr>
       <tr><td>분석일시</td><td>{{ result.uploaded_at }}</td></tr>
     </table>
   </div>
