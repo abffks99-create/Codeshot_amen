@@ -16,8 +16,8 @@
 
     /* ── OpenPhish 위협 섹션 ── */
     .threat-section { background:#fff; border:1px solid #EAECF0; border-radius:16px; padding:24px; margin-bottom:20px; }
-    .threat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
-    .threat-title { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:700; color:#101828; flex:1; min-width:0; flex-wrap:wrap; }
+    .threat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:8px; flex-wrap:nowrap; }
+    .threat-title { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:700; color:#101828; min-width:0; overflow:hidden; white-space:nowrap; flex-shrink:1; }
     .live-dot { width:8px; height:8px; border-radius:50%; background:#F04438; flex-shrink:0; animation:livepulse 1.5s infinite; }
     @keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
@@ -205,10 +205,10 @@
     <div class="threat-header">
       <div class="threat-title">
         <div class="live-dot"></div>
-        OpenPhish 피싱 URL 탐지 현황
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">피싱 URL 탐지 현황</span>
         <span class="live-badge" style="color:#667085;font-size:10px;font-weight:600;background:#F3F4F8;padding:2px 7px;border-radius:5px;">12h 갱신</span>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <span class="today-count" id="top-total-count">탐지 {{ threat_total_count }}건</span>
         <button class="threats-more-btn" id="expand-toggle-btn" onclick="toggleExpandSection()">전체보기 ▾</button>
       </div>
