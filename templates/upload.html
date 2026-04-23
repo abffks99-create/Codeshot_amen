@@ -200,7 +200,9 @@ function renderTip(idx) {
   });
 }
 
-document.getElementById('upload-form').addEventListener('submit', function(e) {
+document.getElementById('upload-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
   const input = document.getElementById('file-input');
   if (!input.files.length) return;
 
@@ -224,10 +226,21 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
     const remaining = Math.max(TOTAL - elapsed, 1);
     timer.textContent = `약 ${remaining}초 남음`;
     if (elapsed >= TOTAL) {
-      timer.innerHTML = '<div style="text-align:center;"><span style="display:block;position:relative;right:0.15em;">거의 완료됐어요!</span><span style="display:block;">잠시만 기다려주세요.</span></div>';
+      timer.innerHTML = '<div style="text-align:center;"><span style="display:block;">거의 완료됐어요!</span><span style="display:block;">잠시만 기다려주세요.</span></div>';
     }
-    if (elapsed >= TOTAL * 3) clearInterval(interval);
   }, 1000);
+
+  try {
+    const formData = new FormData(this);
+    const response = await fetch('/upload', { method: 'POST', body: formData });
+    clearInterval(interval);
+    bar.style.width = '100%';
+    window.location.href = response.url;
+  } catch (err) {
+    clearInterval(interval);
+    document.getElementById('apple-overlay').classList.remove('show');
+    alert('네트워크 오류가 발생했어요. 다시 시도해주세요.');
+  }
 });
 </script>
   <nav class="mobile-bottom-nav">
