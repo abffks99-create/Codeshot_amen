@@ -745,6 +745,13 @@ function goPage(p) {
   renderThreats();
   document.querySelector('.threats-expand').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    var href=a.getAttribute('href');
+    if(path===href||(href!=='/'&&path.startsWith(href))){a.classList.add('active');}
+  });
+})();
 </script>
 </body>
 </html>

@@ -283,6 +283,15 @@
   <a href="/alerts"><span>🔔</span>알림</a>
   <a href="/mypage"><span>👤</span>내정보</a>
 </nav>
+<script>
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    var href=a.getAttribute('href');
+    if(path===href||(href!=='/'&&path.startsWith(href))){a.classList.add('active');}
+  });
+})();
+</script>
 
 <script>
 function openFullscreen() {

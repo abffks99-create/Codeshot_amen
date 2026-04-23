@@ -197,8 +197,10 @@ document.getElementById('crawl-form').addEventListener('submit', async function(
     clearInterval(interval);
     clearInterval(tipInterval);
     bar.style.width = '100%';
-    window.location.href = response.url;
+    // Flask가 에러 렌더링(같은 페이지)이든 redirect든 최종 URL로 이동
+    window.location.replace(response.url);
   } catch (err) {
+    // 네트워크 오류 시 오버레이 닫고 재시도 가능하게
     clearInterval(interval);
     clearInterval(tipInterval);
     document.getElementById('apple-overlay').classList.remove('show');
@@ -224,5 +226,14 @@ document.getElementById('crawl-form').addEventListener('submit', async function(
       <span>👤</span>내정보
     </a>
   </nav>
+<script>
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    var href=a.getAttribute('href');
+    if(path===href||(href!=='/'&&path.startsWith(href))){a.classList.add('active');}
+  });
+})();
+</script>
 </body>
 </html>

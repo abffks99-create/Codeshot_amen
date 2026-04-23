@@ -235,7 +235,7 @@ document.getElementById('upload-form').addEventListener('submit', async function
     const response = await fetch('/upload', { method: 'POST', body: formData });
     clearInterval(interval);
     bar.style.width = '100%';
-    window.location.href = response.url;
+    window.location.replace(response.url);
   } catch (err) {
     clearInterval(interval);
     document.getElementById('apple-overlay').classList.remove('show');
@@ -260,5 +260,14 @@ document.getElementById('upload-form').addEventListener('submit', async function
       <span>👤</span>내정보
     </a>
   </nav>
+<script>
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    var href=a.getAttribute('href');
+    if(path===href||(href!=='/'&&path.startsWith(href))){a.classList.add('active');}
+  });
+})();
+</script>
 </body>
 </html>

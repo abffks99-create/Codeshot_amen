@@ -97,12 +97,13 @@
 {% set level = result.ciritical_level|string %}
 {% set _raw = result.total_analysis|string %}
 {% set analysis_failed = (not result.total_analysis)
-   or (level in ['', 'None', 'null', '오류'])
+   or (level in ['', 'None', 'null', '오류', '분석중'])
    or ('일시적인 오류' in _raw)
    or ('AI 서버가 현재' in _raw)
    or ('사용량 한도' in _raw)
    or ('연결 키에 문제' in _raw)
    or ('응답 시간이 초과' in _raw)
+   or (_raw in ['AI 분석 중...', '분석 대기 중', ''])
    or (_raw[:1] != '{') %}
 <div class="link-modal-bg" id="link-modal">
   <div class="link-modal">
@@ -336,6 +337,15 @@
   <a href="/alerts"><span>🔔</span>알림</a>
   <a href="/mypage"><span>👤</span>내정보</a>
 </nav>
+<script>
+(function(){
+  var path=window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(function(a){
+    var href=a.getAttribute('href');
+    if(path===href||(href!=='/'&&path.startsWith(href))){a.classList.add('active');}
+  });
+})();
+</script>
 
 <script>
 function openModal() {

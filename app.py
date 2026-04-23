@@ -682,7 +682,8 @@ def upload():
 
         cur.execute("INSERT INTO tb_alert (id,alert_type,idx_no,deep_idx,alert_msg,sended_at) VALUES (%s,'업로드',%s,%s,%s,NOW())",
                     (session['user_id'], upload_idx, deep_idx, f'이미지 분석 완료: {file.filename}'))
-        db.commit(); cur.close(); db.close()
+        db.commit()
+        cur.close(); db.close()
         return redirect(f'/result/upload/{deep_idx}')
     return render_template('upload.html', error=None)
 
@@ -890,7 +891,8 @@ def crawl():
         db.commit()
         cur.execute("INSERT INTO tb_alert (id,alert_type,idx_no,deep_idx,alert_msg,sended_at) VALUES (%s,'크롤링',%s,%s,%s,NOW())",
                     (session['user_id'], cr_idx, deep_idx, f'크롤링 분석 완료: {url}'))
-        db.commit(); cur.close(); db.close()
+        db.commit()
+        cur.close(); db.close()
         return redirect(url_for('result_crawl', deep_idx=deep_idx))
     return render_template('crawl.html', error=None)
 
